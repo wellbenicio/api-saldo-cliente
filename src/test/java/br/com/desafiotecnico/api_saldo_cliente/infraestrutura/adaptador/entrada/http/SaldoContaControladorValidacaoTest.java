@@ -47,15 +47,41 @@ class SaldoContaControladorValidacaoTest {
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
                 .thenReturn(saldoConta);
 
-        mockMvc.perform(get("/v1/contas/12345/saldo")
+        assertSaidaSaldoContaDto(
+                get("/v1/contas/12345/saldo")
                         .header("X-Id-Titular", "titular-001")
-                        .accept(APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idConta").value("12345"))
-                .andExpect(jsonPath("$.idClienteTitular").value("titular-001"))
-                .andExpect(jsonPath("$.valorSaldo").value(100.00))
-                .andExpect(jsonPath("$.moeda").value("BRL"))
-                .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value("2026-01-01T10:15:30Z"));
+                        .accept(APPLICATION_JSON),
+                "12345",
+                "titular-001",
+                100.00,
+                "BRL",
+                "2026-01-01T10:15:30Z"
+        );
+    }
+
+    @Test
+    void deveRetornarSaldoComCamposObrigatoriosQuandoEntradaValida() throws Exception {
+        OffsetDateTime atualizadoEm = OffsetDateTime.parse("2026-12-31T23:59:59Z");
+        SaldoConta saldoConta = new SaldoConta(
+                new Conta("998877", "titular-777"),
+                new BigDecimal("450.25"),
+                "USD",
+                atualizadoEm
+        );
+
+        when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
+                .thenReturn(saldoConta);
+
+        assertSaidaSaldoContaDto(
+                get("/v1/contas/998877/saldo")
+                        .header("X-Id-Titular", "titular-777")
+                        .accept(APPLICATION_JSON),
+                "998877",
+                "titular-777",
+                450.25,
+                "USD",
+                "2026-12-31T23:59:59Z"
+        );
     }
 
     @Test
@@ -69,9 +95,10 @@ class SaldoContaControladorValidacaoTest {
     }
 
     @Test
-    void deveRetornarBadRequestQuandoPathVariableForEmBranco() throws Exception {
+    void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
         mockMvc.perform(get("/v1/contas/%20/saldo")
-                        .header("X-Id-Titular", "titular-123"))
+                        .header("X-Id-Titular", "titular-123")
+                        .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
                 .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."))
