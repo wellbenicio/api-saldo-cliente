@@ -2,6 +2,7 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.dto.SaldoContaSaidaDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -20,10 +21,20 @@ public class SaldoContaControlador {
     }
 
     @GetMapping
-    public ResponseEntity<SaldoConta> consultar(
+    public ResponseEntity<SaldoContaSaidaDto> consultar(
             @RequestParam String idConta,
             @RequestHeader("X-Id-Titular") String idTitular
     ) {
-        return ResponseEntity.ok(consultarSaldoContaPortaEntrada.consultar(idConta, idTitular));
+        SaldoConta saldoConta = consultarSaldoContaPortaEntrada.consultar(idConta, idTitular);
+
+        SaldoContaSaidaDto saidaDto = new SaldoContaSaidaDto(
+                saldoConta.conta().idConta(),
+                saldoConta.conta().idTitular(),
+                saldoConta.valor(),
+                saldoConta.moeda(),
+                saldoConta.atualizadoEm()
+        );
+
+        return ResponseEntity.ok(saidaDto);
     }
 }
