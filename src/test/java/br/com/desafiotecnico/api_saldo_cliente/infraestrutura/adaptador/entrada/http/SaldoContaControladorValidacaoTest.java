@@ -67,9 +67,10 @@ class SaldoContaControladorValidacaoTest {
     }
 
     @Test
-    void deveRetornarBadRequestQuandoPathVariableForEmBranco() throws Exception {
+    void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
         mockMvc.perform(get("/v1/contas/%20/saldo")
-                        .header("X-Id-Titular", "titular-123"))
+                        .header("X-Id-Titular", "titular-123")
+                        .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
                 .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
