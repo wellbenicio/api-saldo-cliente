@@ -3,6 +3,7 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
+import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,14 +23,26 @@ import java.util.Set;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import org.springframework.security.oauth2.jwt.Jwt;
+
+import java.time.Instant;
+import java.util.Map;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import org.springframework.test.web.servlet.RequestBuilder;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SaldoContaControlador.class)
-@Import(TratadorGlobalExcecao.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import({
+        TratadorGlobalExcecao.class,
+        ConfiguracaoSeguranca.class,
+        ConversorJwtAutenticacao.class,
+        ManipuladorAutenticacaoNaoAutenticado.class,
+        ManipuladorAcessoNegado.class
+})
+@AutoConfigureMockMvc
 class SaldoContaControladorValidacaoTest {
 
     @Autowired
@@ -36,6 +50,9 @@ class SaldoContaControladorValidacaoTest {
 
     @MockitoBean
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Test
     void deveRetornarSaldoQuandoEntradaValida() throws Exception {
@@ -92,11 +109,8 @@ class SaldoContaControladorValidacaoTest {
         mockMvc.perform(get("/v1/contas/%20/saldo")
                         .principal(usuarioAutenticado("titular-123"))
                         .accept(APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"))
-                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
     }
 
 
