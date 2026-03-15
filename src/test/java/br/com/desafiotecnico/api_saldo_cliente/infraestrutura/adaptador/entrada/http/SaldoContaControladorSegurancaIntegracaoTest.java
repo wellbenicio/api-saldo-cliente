@@ -30,45 +30,48 @@ class SaldoContaControladorSegurancaIntegracaoTest {
 
     @Test
     void deveRetornar200QuandoTokenValidoETitularDaConta() throws Exception {
-        String token = gerarToken("titular-001");
+        String token = gerarToken("titular-001", "12345678900", "conta:saldo:consultar");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .header("X-Id-Titular", "titular-001"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idConta").value("12345"))
                 .andExpect(jsonPath("$.idClienteTitular").value("titular-001"));
     }
 
     @Test
-    void deveRetornar403QuandoTokenValidoEMasSolicitanteNaoTitular() throws Exception {
-        String token = gerarToken("titular-999");
+    void deveRetornar403QuandoTokenValidoMasSolicitanteNaoTitular() throws Exception {
+        String token = gerarToken("titular-999", "12345678900", "conta:saldo:consultar");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .header("X-Id-Titular", "titular-999"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"))
+                .andExpect(jsonPath("$.mensagem").value("Acesso não autorizado para titular titular-999 na conta 12345"));
     }
 
     @Test
     void deveRetornar401QuandoTokenInvalidoOuAusente() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido")
-                        .header("X-Id-Titular", "titular-001"))
-                .andExpect(status().isUnauthorized());
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
+                .andExpect(jsonPath("$.mensagem").value("Token JWT inválido ou expirado."));
 
-        mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header("X-Id-Titular", "titular-001"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/contas/12345/saldo"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
+                .andExpect(jsonPath("$.mensagem").value("Token JWT ausente ou inválido."));
     }
 
-    private String gerarToken(String sujeito) {
+    private String gerarToken(String sujeito, String documento, String escopo) {
         Instant agora = Instant.now();
         SecretKey chave = Keys.hmacShaKeyFor(SEGREDO.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .subject(sujeito)
+                .claim("documento", documento)
+                .claim("escopo", escopo)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
                 .signWith(chave)
