@@ -25,7 +25,7 @@ Para este desafio técnico, classes, métodos e pacotes foram nomeados em portug
 Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
 
 ## Segurança nesta fase
-- A dependência `spring-boot-starter-security` é mantida para preparar a evolução da API sem retrabalho estrutural.
-- A configuração atual do `SecurityFilterChain` está **explicitamente permissiva**, incluindo o endpoint `GET /v1/contas/{idConta}/saldo`, para viabilizar esta fatia funcional.
-- A autenticação real (prova de identidade) será implementada em etapa posterior.
-- A autorização por titularidade (se o solicitante pode consultar a conta) já existe como regra do caso de uso, separada conceitualmente da autenticação.
+- A API está preparada para autenticação via **JWT Bearer Token**, ainda sem integração com provedor real de identidade nesta etapa.
+- O fluxo de autenticação considera a validação do token e a montagem de um principal de aplicação chamado `UsuarioAutenticado`, contendo `idCliente`, `documento` e `perfis/scopes`.
+- A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta.
+- Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
