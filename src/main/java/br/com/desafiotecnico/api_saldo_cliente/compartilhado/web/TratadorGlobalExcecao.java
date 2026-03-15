@@ -13,7 +13,6 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -29,42 +28,32 @@ public class TratadorGlobalExcecao {
                 .map(this::mapearErroCampo)
                 .toList();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErroApiResposta(
-                        "REQUISICAO_INVALIDA",
-                        "Um ou mais campos da requisição são inválidos.",
-                        OffsetDateTime.now(),
-                        detalhes
-                ));
+        return respostaRequisicaoInvalida(
+                "Um ou mais campos da requisição são inválidos.",
+                detalhes
+        );
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
-    public ResponseEntity<ErroApiResposta> tratarErroValidacaoParametros(Exception excecao) {
-        List<DetalheErroValidacao> detalhes = excecao instanceof ConstraintViolationException constraintViolationException
-                ? constraintViolationException.getConstraintViolations()
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErroApiResposta> tratarErroValidacaoConstraint(ConstraintViolationException excecao) {
+        List<DetalheErroValidacao> detalhes = excecao.getConstraintViolations()
                 .stream()
                 .map(violacao -> new DetalheErroValidacao(violacao.getPropertyPath().toString(), violacao.getMessage()))
-                .toList()
-                : List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()));
+                .toList();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErroApiResposta(
-                        "REQUISICAO_INVALIDA",
-                        "Um ou mais campos da requisição são inválidos.",
-                        OffsetDateTime.now(),
-                        detalhes
-                ));
+        String mensagem = detalhes.isEmpty()
+                ? "Um ou mais campos da requisição são inválidos."
+                : detalhes.get(0).mensagem();
+
+        return respostaRequisicaoInvalida(mensagem, detalhes);
     }
 
     @ExceptionHandler({MissingServletRequestParameterException.class, MissingRequestHeaderException.class})
-    public ResponseEntity<ErroApiResposta> tratarErroParametroOuCabecalhoAusente(Exception excecao) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErroApiResposta(
-                        "REQUISICAO_INVALIDA",
-                        excecao.getMessage(),
-                        OffsetDateTime.now(),
-                        List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()))
-                ));
+    public ResponseEntity<ErroApiResposta> tratarErroValidacaoParametros(Exception excecao) {
+        return respostaRequisicaoInvalida(
+                excecao.getMessage(),
+                List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()))
+        );
     }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
@@ -89,6 +78,16 @@ public class TratadorGlobalExcecao {
     public ResponseEntity<ErroApiResposta> tratarGenerica(Exception excecao) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErroApiResposta("ERRO_INTERNO", excecao.getMessage(), OffsetDateTime.now()));
+    }
+
+    private ResponseEntity<ErroApiResposta> respostaRequisicaoInvalida(String mensagem, List<DetalheErroValidacao> detalhes) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErroApiResposta(
+                        "REQUISICAO_INVALIDA",
+                        mensagem,
+                        OffsetDateTime.now(),
+                        detalhes
+                ));
     }
 
     private DetalheErroValidacao mapearErroCampo(FieldError erroCampo) {
