@@ -11,7 +11,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -21,40 +20,6 @@ import java.util.List;
 
 @RestControllerAdvice
 public class TratadorGlobalExcecao {
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErroApiResposta> tratarValidacaoDto(MethodArgumentNotValidException excecao) {
-        String mensagem = excecao.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(FieldError::getDefaultMessage)
-                .collect(Collectors.joining("; "));
-
-        return respostaRequisicaoInvalida(mensagem);
-    }
-
-    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
-    public ResponseEntity<ErroApiResposta> tratarValidacaoParametros(Exception excecao) {
-        return respostaRequisicaoInvalida(excecao.getMessage());
-    }
-
-    @ExceptionHandler(ContaNaoEncontradaExcecao.class)
-    public ResponseEntity<ErroApiResposta> tratarContaNaoEncontrada(ContaNaoEncontradaExcecao excecao) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErroApiResposta("CONTA_NAO_ENCONTRADA", excecao.getMessage(), OffsetDateTime.now()));
-    }
-
-    @ExceptionHandler(AcessoNaoAutorizadoContaExcecao.class)
-    public ResponseEntity<ErroApiResposta> tratarAcessoNaoAutorizado(AcessoNaoAutorizadoContaExcecao excecao) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErroApiResposta("ACESSO_NAO_AUTORIZADO", excecao.getMessage(), OffsetDateTime.now()));
-    }
-
-    @ExceptionHandler(ExcecaoDominio.class)
-    public ResponseEntity<ErroApiResposta> tratarExcecaoDominio(ExcecaoDominio excecao) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(new ErroApiResposta("ERRO_DOMINIO", excecao.getMessage(), OffsetDateTime.now()));
-    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroApiResposta> tratarErroValidacaoCorpo(MethodArgumentNotValidException excecao) {
@@ -73,14 +38,14 @@ public class TratadorGlobalExcecao {
                 ));
     }
 
-
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErroApiResposta> tratarErroValidacaoConstraint(ConstraintViolationException excecao) {
-        List<DetalheErroValidacao> detalhes = excecao.getConstraintViolations()
+    @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
+    public ResponseEntity<ErroApiResposta> tratarErroValidacaoParametros(Exception excecao) {
+        List<DetalheErroValidacao> detalhes = excecao instanceof ConstraintViolationException constraintViolationException
+                ? constraintViolationException.getConstraintViolations()
                 .stream()
                 .map(violacao -> new DetalheErroValidacao(violacao.getPropertyPath().toString(), violacao.getMessage()))
-                .toList();
+                .toList()
+                : List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErroApiResposta(
@@ -92,7 +57,7 @@ public class TratadorGlobalExcecao {
     }
 
     @ExceptionHandler({MissingServletRequestParameterException.class, MissingRequestHeaderException.class})
-    public ResponseEntity<ErroApiResposta> tratarErroValidacaoParametros(Exception excecao) {
+    public ResponseEntity<ErroApiResposta> tratarErroParametroOuCabecalhoAusente(Exception excecao) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErroApiResposta(
                         "REQUISICAO_INVALIDA",
@@ -100,6 +65,24 @@ public class TratadorGlobalExcecao {
                         OffsetDateTime.now(),
                         List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()))
                 ));
+    }
+
+    @ExceptionHandler(ContaNaoEncontradaExcecao.class)
+    public ResponseEntity<ErroApiResposta> tratarContaNaoEncontrada(ContaNaoEncontradaExcecao excecao) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErroApiResposta("CONTA_NAO_ENCONTRADA", excecao.getMessage(), OffsetDateTime.now()));
+    }
+
+    @ExceptionHandler(AcessoNaoAutorizadoContaExcecao.class)
+    public ResponseEntity<ErroApiResposta> tratarAcessoNaoAutorizado(AcessoNaoAutorizadoContaExcecao excecao) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErroApiResposta("ACESSO_NAO_AUTORIZADO", excecao.getMessage(), OffsetDateTime.now()));
+    }
+
+    @ExceptionHandler(ExcecaoDominio.class)
+    public ResponseEntity<ErroApiResposta> tratarExcecaoDominio(ExcecaoDominio excecao) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(new ErroApiResposta("ERRO_DOMINIO", excecao.getMessage(), OffsetDateTime.now()));
     }
 
     @ExceptionHandler(Exception.class)
