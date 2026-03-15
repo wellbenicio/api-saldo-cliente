@@ -1,7 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http;
 
-import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
@@ -36,12 +36,11 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarSaldoQuandoEntradaValida() throws Exception {
-        SaldoConta saldoConta = new SaldoConta(new Conta("12345", "titular-001"), new BigDecimal("100.00"), OffsetDateTime.now());
+        SaldoConta saldoConta = new SaldoConta(new Conta("12345", "titular-001"), new BigDecimal("100.00"), "BRL", OffsetDateTime.now());
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
                 .thenReturn(saldoConta);
 
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "12345")
+        mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header("X-Id-Titular", "titular-001")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -50,8 +49,7 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "")
+        mockMvc.perform(get("/v1/contas/%20/saldo")
                         .header("X-Id-Titular", "titular-001")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -61,8 +59,7 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarErroPadronizadoQuandoTitularInvalido() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "12345")
+        mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header("X-Id-Titular", "abc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())

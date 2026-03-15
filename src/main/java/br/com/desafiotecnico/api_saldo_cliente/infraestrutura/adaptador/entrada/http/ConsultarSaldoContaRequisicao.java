@@ -6,6 +6,6 @@ import jakarta.validation.constraints.Size;
 public record ConsultarSaldoContaRequisicao(
         @NotBlank(message = "Parâmetro 'idConta' é obrigatório.")
         @Size(min = 5, max = 20, message = "Parâmetro 'idConta' deve ter entre 5 e 20 caracteres.")
-        String idConta
+        String idContaPath
 ) {
 }

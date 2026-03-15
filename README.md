@@ -26,6 +26,6 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 
 ## Segurança nesta fase
 - A dependência `spring-boot-starter-security` é mantida para preparar a evolução da API sem retrabalho estrutural.
-- A configuração atual do `SecurityFilterChain` está **explicitamente permissiva**, incluindo o endpoint `GET /v1/saldos`, para viabilizar esta fatia funcional.
+- A configuração atual do `SecurityFilterChain` está **explicitamente permissiva**, incluindo o endpoint `GET /v1/contas/{idConta}/saldo`, para viabilizar esta fatia funcional.
 - A autenticação real (prova de identidade) será implementada em etapa posterior.
 - A autorização por titularidade (se o solicitante pode consultar a conta) já existe como regra do caso de uso, separada conceitualmente da autenticação.
