@@ -1,0 +1,77 @@
+package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.test.web.servlet.MockMvc;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class SaldoContaControladorSegurancaIntegracaoTest {
+
+    private static final String SEGREDO = "segredo-jwt-api-saldo-cliente-2026-chave-segura";
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void deveRetornar200QuandoTokenValidoETitularDaConta() throws Exception {
+        String token = gerarToken("titular-001");
+
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .header("X-Id-Titular", "titular-001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idConta").value("12345"))
+                .andExpect(jsonPath("$.idClienteTitular").value("titular-001"));
+    }
+
+    @Test
+    void deveRetornar403QuandoTokenValidoEMasSolicitanteNaoTitular() throws Exception {
+        String token = gerarToken("titular-999");
+
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .header("X-Id-Titular", "titular-999"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
+    }
+
+    @Test
+    void deveRetornar401QuandoTokenInvalidoOuAusente() throws Exception {
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido")
+                        .header("X-Id-Titular", "titular-001"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .header("X-Id-Titular", "titular-001"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String gerarToken(String sujeito) {
+        Instant agora = Instant.now();
+        SecretKey chave = Keys.hmacShaKeyFor(SEGREDO.getBytes(StandardCharsets.UTF_8));
+
+        return Jwts.builder()
+                .subject(sujeito)
+                .issuedAt(Date.from(agora))
+                .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
+                .signWith(chave)
+                .compact();
+    }
+}

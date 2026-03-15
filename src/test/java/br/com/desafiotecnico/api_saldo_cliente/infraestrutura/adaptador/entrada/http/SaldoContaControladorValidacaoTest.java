@@ -11,8 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -30,6 +32,9 @@ class SaldoContaControladorValidacaoTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private FiltroAutenticacaoJwt filtroAutenticacaoJwt;
 
     @MockitoBean
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
@@ -114,8 +119,25 @@ class SaldoContaControladorValidacaoTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
                 .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idTitular"))
                 .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
+    }
+
+    private void assertSaidaSaldoContaDto(
+            RequestBuilder requisicao,
+            String idConta,
+            String idTitular,
+            double valor,
+            String moeda,
+            String atualizadoEm
+    ) throws Exception {
+        mockMvc.perform(requisicao)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idConta").value(idConta))
+                .andExpect(jsonPath("$.idClienteTitular").value(idTitular))
+                .andExpect(jsonPath("$.valorSaldo").value(valor))
+                .andExpect(jsonPath("$.moeda").value(moeda))
+                .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value(atualizadoEm));
     }
 
 }
