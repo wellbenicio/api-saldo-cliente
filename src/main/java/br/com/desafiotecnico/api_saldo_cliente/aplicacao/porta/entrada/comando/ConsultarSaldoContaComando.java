@@ -8,8 +8,8 @@ public record ConsultarSaldoContaComando(
         @Size(min = 5, max = 20, message = "Parâmetro 'idConta' deve ter entre 5 e 20 caracteres.")
         String idConta,
 
-        @NotBlank(message = "Cabeçalho 'X-Id-Titular' é obrigatório.")
-        @Size(min = 5, max = 20, message = "Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres.")
+        @NotBlank(message = "Identificador do titular autenticado é obrigatório.")
+        @Size(min = 5, max = 20, message = "Identificador do titular autenticado deve ter entre 5 e 20 caracteres.")
         String idTitularSolicitante
 ) {
 }
