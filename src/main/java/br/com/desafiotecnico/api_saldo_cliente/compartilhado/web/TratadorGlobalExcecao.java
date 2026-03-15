@@ -4,6 +4,7 @@ import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.ErroApiResposta
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ExcecaoDominio;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,12 +14,29 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
 @RestControllerAdvice
 public class TratadorGlobalExcecao {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErroApiResposta> tratarValidacaoDto(MethodArgumentNotValidException excecao) {
+        String mensagem = excecao.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining("; "));
+
+        return respostaRequisicaoInvalida(mensagem);
+    }
+
+    @ExceptionHandler({HandlerMethodValidationException.class, ConstraintViolationException.class})
+    public ResponseEntity<ErroApiResposta> tratarValidacaoParametros(Exception excecao) {
+        return respostaRequisicaoInvalida(excecao.getMessage());
+    }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
     public ResponseEntity<ErroApiResposta> tratarContaNaoEncontrada(ContaNaoEncontradaExcecao excecao) {
