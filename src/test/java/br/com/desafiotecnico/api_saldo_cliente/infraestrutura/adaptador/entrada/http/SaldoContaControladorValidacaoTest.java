@@ -30,7 +30,7 @@ class SaldoContaControladorValidacaoTest {
         mockMvc.perform(get("/v1/contas/12345/saldo"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("requisicao"));
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"));
     }
 
     @Test
@@ -39,6 +39,6 @@ class SaldoContaControladorValidacaoTest {
                         .header("X-Id-Titular", "titular-123"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("consultar.idConta"));
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"));
     }
 }

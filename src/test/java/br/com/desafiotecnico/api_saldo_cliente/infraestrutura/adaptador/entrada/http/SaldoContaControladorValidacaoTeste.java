@@ -36,7 +36,13 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarSaldoQuandoEntradaValida() throws Exception {
-        SaldoConta saldoConta = new SaldoConta(new Conta("12345", "titular-001"), new BigDecimal("100.00"), "BRL", OffsetDateTime.now());
+        SaldoConta saldoConta = new SaldoConta(
+                new Conta("12345", "titular-001"),
+                new BigDecimal("100.00"),
+                "BRL",
+                OffsetDateTime.now()
+        );
+
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
                 .thenReturn(saldoConta);
 

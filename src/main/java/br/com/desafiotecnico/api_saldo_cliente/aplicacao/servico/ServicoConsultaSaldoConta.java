@@ -17,11 +17,6 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
     }
 
-    /**
-     * Regra de autorização por titularidade mantida no caso de uso.
-     * A autenticação (quem é o usuário) será tratada pela camada de segurança
-     * quando integrada nas próximas etapas.
-     */
     @Override
     public SaldoConta consultar(ConsultarSaldoContaComando comando) {
         SaldoConta saldoConta = repositorioSaldoContaPortaSaida

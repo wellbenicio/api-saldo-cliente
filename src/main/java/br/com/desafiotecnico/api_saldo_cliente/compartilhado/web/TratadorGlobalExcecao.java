@@ -9,8 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingRequestHeaderException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,10 +26,11 @@ public class TratadorGlobalExcecao {
                 .map(this::mapearErroCampo)
                 .toList();
 
-        return respostaRequisicaoInvalida(
-                "Um ou mais campos da requisição são inválidos.",
-                detalhes
-        );
+        String mensagem = detalhes.isEmpty()
+                ? "Um ou mais campos da requisição são inválidos."
+                : detalhes.get(0).mensagem();
+
+        return respostaRequisicaoInvalida(mensagem, detalhes);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -46,14 +45,6 @@ public class TratadorGlobalExcecao {
                 : detalhes.get(0).mensagem();
 
         return respostaRequisicaoInvalida(mensagem, detalhes);
-    }
-
-    @ExceptionHandler({MissingServletRequestParameterException.class, MissingRequestHeaderException.class})
-    public ResponseEntity<ErroApiResposta> tratarErroValidacaoParametros(Exception excecao) {
-        return respostaRequisicaoInvalida(
-                excecao.getMessage(),
-                List.of(new DetalheErroValidacao("requisicao", excecao.getMessage()))
-        );
     }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
