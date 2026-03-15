@@ -5,6 +5,7 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.C
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import org.springframework.test.web.servlet.RequestBuilder;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -49,7 +52,7 @@ class SaldoContaControladorValidacaoTest {
 
         assertSaidaSaldoContaDto(
                 get("/v1/contas/12345/saldo")
-                        .header("X-Id-Titular", "titular-001")
+                        .principal(usuarioAutenticado("titular-001"))
                         .accept(APPLICATION_JSON),
                 "12345",
                 "titular-001",
@@ -74,7 +77,7 @@ class SaldoContaControladorValidacaoTest {
 
         assertSaidaSaldoContaDto(
                 get("/v1/contas/998877/saldo")
-                        .header("X-Id-Titular", "titular-777")
+                        .principal(usuarioAutenticado("titular-777"))
                         .accept(APPLICATION_JSON),
                 "998877",
                 "titular-777",
@@ -84,20 +87,10 @@ class SaldoContaControladorValidacaoTest {
         );
     }
 
-    @Test
-    void deveRetornarBadRequestQuandoCabecalhoObrigatorioNaoForInformado() throws Exception {
-        mockMvc.perform(get("/v1/contas/12345/saldo"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
-                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."));
-    }
-
-    @Test
+        @Test
     void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
         mockMvc.perform(get("/v1/contas/%20/saldo")
-                        .header("X-Id-Titular", "titular-123")
+                        .principal(usuarioAutenticado("titular-123"))
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
@@ -106,16 +99,25 @@ class SaldoContaControladorValidacaoTest {
                 .andExpect(jsonPath("$.detalhes[0].mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
     }
 
-    @Test
-    void deveRetornarErroPadronizadoQuandoTitularInvalido() throws Exception {
-        mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header("X-Id-Titular", "abc")
-                        .accept(APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."))
-                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
-                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
+
+    private void assertSaidaSaldoContaDto(
+            RequestBuilder requisicao,
+            String idConta,
+            String idTitular,
+            Double valor,
+            String moeda,
+            String atualizadoEm
+    ) throws Exception {
+        mockMvc.perform(requisicao)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idConta").value(idConta))
+                .andExpect(jsonPath("$.idClienteTitular").value(idTitular))
+                .andExpect(jsonPath("$.valorSaldo").value(valor))
+                .andExpect(jsonPath("$.moeda").value(moeda))
+                .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value(atualizadoEm));
     }
 
+    private UsuarioAutenticado usuarioAutenticado(String idCliente) {
+        return new UsuarioAutenticado(idCliente, "12345678900", Set.of("saldo:read"));
+    }
 }
