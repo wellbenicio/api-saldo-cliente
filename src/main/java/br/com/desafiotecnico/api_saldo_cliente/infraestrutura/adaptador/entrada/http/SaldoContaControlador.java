@@ -1,21 +1,23 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http;
 
-import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.dto.ConsultarSaldoContaHttpEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.dto.SaldoContaSaidaDto;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Validated
+import java.util.Set;
+
 @RestController
-@Validated
 @RequestMapping("/v1/saldos")
 public class SaldoContaControlador {
 
@@ -32,10 +34,22 @@ public class SaldoContaControlador {
 
     @GetMapping
     public ResponseEntity<SaldoContaSaidaDto> consultar(
-            @RequestParam String idConta,
-            @RequestHeader("X-Id-Titular") String idTitular
+            @RequestParam(required = false) String idConta,
+            @RequestHeader(value = "X-Id-Titular", required = false) String idTitular
     ) {
-        SaldoConta saldoConta = consultarSaldoContaPortaEntrada.consultar(idConta, idTitular);
+        ConsultarSaldoContaHttpEntrada httpEntrada = new ConsultarSaldoContaHttpEntrada(idConta, idTitular);
+        Set<ConstraintViolation<ConsultarSaldoContaHttpEntrada>> violacoes = validator.validate(httpEntrada);
+
+        if (!violacoes.isEmpty()) {
+            throw new ConstraintViolationException(violacoes);
+        }
+
+        ConsultarSaldoContaComando comando = new ConsultarSaldoContaComando(
+                httpEntrada.idConta(),
+                httpEntrada.idTitularSolicitante()
+        );
+
+        SaldoConta saldoConta = consultarSaldoContaPortaEntrada.consultar(comando);
 
         SaldoContaSaidaDto saidaDto = new SaldoContaSaidaDto(
                 saldoConta.conta().idConta(),

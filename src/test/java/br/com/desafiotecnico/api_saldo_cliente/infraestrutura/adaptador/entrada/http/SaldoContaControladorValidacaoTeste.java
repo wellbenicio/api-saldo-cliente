@@ -1,7 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http;
 
-import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
@@ -36,7 +36,13 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarSaldoQuandoEntradaValida() throws Exception {
-        SaldoConta saldoConta = new SaldoConta(new Conta("12345", "titular-001"), new BigDecimal("100.00"), OffsetDateTime.now());
+        SaldoConta saldoConta = new SaldoConta(
+                new Conta("12345", "titular-001"),
+                new BigDecimal("100.00"),
+                "BRL",
+                OffsetDateTime.now()
+        );
+
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
                 .thenReturn(saldoConta);
 
