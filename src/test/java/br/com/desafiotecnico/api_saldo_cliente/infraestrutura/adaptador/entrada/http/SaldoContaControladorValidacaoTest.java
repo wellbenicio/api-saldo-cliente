@@ -63,7 +63,9 @@ class SaldoContaControladorValidacaoTest {
         mockMvc.perform(get("/v1/contas/12345/saldo"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."));
+                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."));
     }
 
     @Test
@@ -72,7 +74,9 @@ class SaldoContaControladorValidacaoTest {
                         .header("X-Id-Titular", "titular-123"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
+                .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
     }
 
     @Test
@@ -82,6 +86,9 @@ class SaldoContaControladorValidacaoTest {
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
+                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
     }
+
 }

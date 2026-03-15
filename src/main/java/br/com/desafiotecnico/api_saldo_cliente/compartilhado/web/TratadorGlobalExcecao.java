@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,7 +40,10 @@ public class TratadorGlobalExcecao {
     public ResponseEntity<ErroApiResposta> tratarErroValidacaoConstraint(ConstraintViolationException excecao) {
         List<DetalheErroValidacao> detalhes = excecao.getConstraintViolations()
                 .stream()
-                .map(violacao -> new DetalheErroValidacao(violacao.getPropertyPath().toString(), violacao.getMessage()))
+                .map(violacao -> new DetalheErroValidacao(
+                        normalizarCampo(violacao.getPropertyPath().toString()),
+                        violacao.getMessage()
+                ))
                 .toList();
 
         String mensagem = detalhes.isEmpty()
@@ -61,6 +65,13 @@ public class TratadorGlobalExcecao {
         String nomeParametro = excecao.getParameterName();
         String mensagem = "Parâmetro '" + nomeParametro + "' é obrigatório.";
         return respostaRequisicaoInvalida(mensagem, List.of(new DetalheErroValidacao(nomeParametro, mensagem)));
+    }
+
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<ErroApiResposta> tratarVariavelCaminhoAusente(MissingPathVariableException excecao) {
+        String nomeVariavel = excecao.getVariableName();
+        String mensagem = "Parâmetro de rota '" + nomeVariavel + "' é obrigatório.";
+        return respostaRequisicaoInvalida(mensagem, List.of(new DetalheErroValidacao(nomeVariavel, mensagem)));
     }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
@@ -99,5 +110,16 @@ public class TratadorGlobalExcecao {
 
     private DetalheErroValidacao mapearErroCampo(FieldError erroCampo) {
         return new DetalheErroValidacao(erroCampo.getField(), erroCampo.getDefaultMessage());
+    }
+
+    private String normalizarCampo(String nomeCampo) {
+        String campoNormalizado = nomeCampo.contains(".")
+                ? nomeCampo.substring(nomeCampo.lastIndexOf('.') + 1)
+                : nomeCampo;
+
+        return switch (campoNormalizado) {
+            case "idTitularSolicitante" -> "X-Id-Titular";
+            default -> campoNormalizado;
+        };
     }
 }
