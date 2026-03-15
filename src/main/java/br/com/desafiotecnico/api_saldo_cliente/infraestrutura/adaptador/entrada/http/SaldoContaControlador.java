@@ -10,26 +10,31 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Set;
 
 @RestController
-@RequestMapping("/v1/saldos")
+@RequestMapping("/v1/contas")
 public class SaldoContaControlador {
 
     private final ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
+    private final Validator validator;
 
-    public SaldoContaControlador(ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada) {
+    public SaldoContaControlador(
+            ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada,
+            Validator validator
+    ) {
         this.consultarSaldoContaPortaEntrada = consultarSaldoContaPortaEntrada;
+        this.validator = validator;
     }
 
     @GetMapping("/{idConta}/saldo")
     public ResponseEntity<SaldoContaSaidaDto> consultar(
-            @RequestParam(required = false) String idConta,
+            @PathVariable String idConta,
             @RequestHeader(value = "X-Id-Titular", required = false) String idTitular
     ) {
         ConsultarSaldoContaHttpEntrada httpEntrada = new ConsultarSaldoContaHttpEntrada(idConta, idTitular);

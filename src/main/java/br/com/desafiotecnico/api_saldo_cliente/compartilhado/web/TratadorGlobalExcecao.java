@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -45,6 +47,20 @@ public class TratadorGlobalExcecao {
                 : detalhes.get(0).mensagem();
 
         return respostaRequisicaoInvalida(mensagem, detalhes);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErroApiResposta> tratarCabecalhoAusente(MissingRequestHeaderException excecao) {
+        String nomeCabecalho = excecao.getHeaderName();
+        String mensagem = "Cabeçalho '" + nomeCabecalho + "' é obrigatório.";
+        return respostaRequisicaoInvalida(mensagem, List.of(new DetalheErroValidacao(nomeCabecalho, mensagem)));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErroApiResposta> tratarParametroAusente(MissingServletRequestParameterException excecao) {
+        String nomeParametro = excecao.getParameterName();
+        String mensagem = "Parâmetro '" + nomeParametro + "' é obrigatório.";
+        return respostaRequisicaoInvalida(mensagem, List.of(new DetalheErroValidacao(nomeParametro, mensagem)));
     }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
