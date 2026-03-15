@@ -1,6 +1,8 @@
 package br.com.desafiotecnico.api_saldo_cliente.aplicacao.servico;
 
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.RepositorioSaldoContaPortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
@@ -16,14 +18,19 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
     }
 
+    /**
+     * Regra de autorização por titularidade mantida no caso de uso.
+     * A autenticação (quem é o usuário) será tratada pela camada de segurança
+     * quando integrada nas próximas etapas.
+     */
     @Override
-    public SaldoConta consultar(String idConta, String idTitularSolicitante) {
+    public SaldoConta consultar(ConsultarSaldoContaComando comando) {
         SaldoConta saldoConta = repositorioSaldoContaPortaSaida
-                .buscarPorIdConta(idConta)
-                .orElseThrow(() -> new ContaNaoEncontradaExcecao(idConta));
+                .buscarPorIdConta(comando.idConta())
+                .orElseThrow(() -> new ContaNaoEncontradaExcecao(comando.idConta()));
 
-        if (!saldoConta.conta().idTitular().equals(idTitularSolicitante)) {
-            throw new AcessoNaoAutorizadoContaExcecao(idConta, idTitularSolicitante);
+        if (!saldoConta.conta().idTitular().equals(comando.idTitularSolicitante())) {
+            throw new AcessoNaoAutorizadoContaExcecao(comando.idConta(), comando.idTitularSolicitante());
         }
 
         return saldoConta;
