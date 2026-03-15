@@ -23,7 +23,7 @@ public class ConfiguracaoSeguranca {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/v1/saldos/**").permitAll()
+                        .requestMatchers("/v1/contas/**").permitAll()
                         .anyRequest().permitAll()
                 )
                 .formLogin(AbstractHttpConfigurer::disable);

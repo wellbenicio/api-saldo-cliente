@@ -22,17 +22,12 @@ import java.util.Set;
 public class SaldoContaControlador {
 
     private final ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
-    private final Validator validator;
 
-    public SaldoContaControlador(
-            ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada,
-            Validator validator
-    ) {
+    public SaldoContaControlador(ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada) {
         this.consultarSaldoContaPortaEntrada = consultarSaldoContaPortaEntrada;
-        this.validator = validator;
     }
 
-    @GetMapping
+    @GetMapping("/{idConta}/saldo")
     public ResponseEntity<SaldoContaSaidaDto> consultar(
             @RequestParam(required = false) String idConta,
             @RequestHeader(value = "X-Id-Titular", required = false) String idTitular

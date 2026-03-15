@@ -26,18 +26,16 @@ class SaldoContaControladorValidacaoTest {
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
 
     @Test
-    void deveRetornarBadRequestQuandoParametroObrigatorioNaoForInformado() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .header("X-Id-Titular", "titular-123"))
+    void deveRetornarBadRequestQuandoCabecalhoObrigatorioNaoForInformado() throws Exception {
+        mockMvc.perform(get("/v1/contas/12345/saldo"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
                 .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"));
     }
 
     @Test
-    void deveRetornarBadRequestQuandoParametroForEmBranco() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .param("idConta", " ")
+    void deveRetornarBadRequestQuandoPathVariableForEmBranco() throws Exception {
+        mockMvc.perform(get("/v1/contas/%20/saldo")
                         .header("X-Id-Titular", "titular-123"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))

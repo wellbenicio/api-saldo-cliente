@@ -46,8 +46,7 @@ class SaldoContaControladorValidacaoTeste {
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
                 .thenReturn(saldoConta);
 
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "12345")
+        mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header("X-Id-Titular", "titular-001")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -56,8 +55,7 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "")
+        mockMvc.perform(get("/v1/contas/%20/saldo")
                         .header("X-Id-Titular", "titular-001")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -67,8 +65,7 @@ class SaldoContaControladorValidacaoTeste {
 
     @Test
     void deveRetornarErroPadronizadoQuandoTitularInvalido() throws Exception {
-        mockMvc.perform(get("/v1/saldos")
-                        .queryParam("idConta", "12345")
+        mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header("X-Id-Titular", "abc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
