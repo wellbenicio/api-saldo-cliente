@@ -118,7 +118,7 @@ public class TratadorGlobalExcecao {
                 : nomeCampo;
 
         return switch (campoNormalizado) {
-            case "idTitularSolicitante" -> "X-Id-Titular";
+            case "idTitularSolicitante" -> "idTitularSolicitante";
             default -> campoNormalizado;
         };
     }

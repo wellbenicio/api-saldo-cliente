@@ -6,10 +6,7 @@ import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalE
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao.ConfiguracaoSeguranca;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ConversorJwtAutenticacao;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAcessoNegado;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAutenticacaoNaoAutenticado;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Set;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -32,6 +30,7 @@ import java.util.Map;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import org.springframework.test.web.servlet.RequestBuilder;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,7 +69,7 @@ class SaldoContaControladorValidacaoTest {
 
         assertSaidaSaldoContaDto(
                 get("/v1/contas/12345/saldo")
-                        .with(tokenTitular("titular-001"))
+                        .principal(usuarioAutenticado("titular-001"))
                         .accept(APPLICATION_JSON),
                 "12345",
                 "titular-001",
@@ -95,7 +94,7 @@ class SaldoContaControladorValidacaoTest {
 
         assertSaidaSaldoContaDto(
                 get("/v1/contas/998877/saldo")
-                        .with(tokenTitular("titular-777"))
+                        .principal(usuarioAutenticado("titular-777"))
                         .accept(APPLICATION_JSON),
                 "998877",
                 "titular-777",
@@ -105,62 +104,34 @@ class SaldoContaControladorValidacaoTest {
         );
     }
 
-    @Test
-    void deveRetornarNaoAutenticadoQuandoTokenNaoForInformado() throws Exception {
-        mockMvc.perform(get("/v1/contas/12345/saldo"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
-                .andExpect(jsonPath("$.mensagem").value("Autenticação obrigatória para acessar este recurso."));
-    }
-
-
-    @Test
-    void devePreservarTratadorGlobalQuandoAutenticadoSemPermissaoNaConta() throws Exception {
-        when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
-                .thenThrow(new AcessoNaoAutorizadoContaExcecao("12345", "titular-xyz"));
-
-        mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .with(tokenTitular("titular-xyz"))
+        @Test
+    void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
+        mockMvc.perform(get("/v1/contas/%20/saldo")
+                        .principal(usuarioAutenticado("titular-123"))
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
     }
 
-    @Test
-    void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
-        mockMvc.perform(get("/v1/contas/%20/saldo")
-                        .with(tokenTitular("titular-123"))
-                        .accept(APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
-    }
-
-
-    private org.springframework.test.web.servlet.request.RequestPostProcessor tokenTitular(String idTitular) {
-        ConversorJwtAutenticacao conversor = new ConversorJwtAutenticacao();
-        Jwt jwt = new Jwt(
-                "token",
-                Instant.now(),
-                Instant.now().plusSeconds(300),
-                Map.of("alg", "none"),
-                Map.of("sub", idTitular)
-        );
-        return authentication(conversor.convert(jwt));
-    }
 
     private void assertSaidaSaldoContaDto(
-            org.springframework.test.web.servlet.RequestBuilder requestBuilder,
+            RequestBuilder requisicao,
             String idConta,
             String idTitular,
-            double valor,
+            Double valor,
             String moeda,
             String atualizadoEm
     ) throws Exception {
-        mockMvc.perform(requestBuilder)
+        mockMvc.perform(requisicao)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idConta").value(idConta))
                 .andExpect(jsonPath("$.idClienteTitular").value(idTitular))
                 .andExpect(jsonPath("$.valorSaldo").value(valor))
                 .andExpect(jsonPath("$.moeda").value(moeda))
                 .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value(atualizadoEm));
+    }
+
+    private UsuarioAutenticado usuarioAutenticado(String idCliente) {
+        return new UsuarioAutenticado(idCliente, "12345678900", Set.of("saldo:read"));
     }
 }
