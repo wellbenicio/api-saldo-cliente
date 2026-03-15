@@ -3,6 +3,7 @@ package br.com.desafiotecnico.api_saldo_cliente.compartilhado.web;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ExcecaoDominio;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +13,12 @@ import java.time.OffsetDateTime;
 
 @RestControllerAdvice
 public class TratadorGlobalExcecao {
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErroApiResposta> tratarValidacao(ConstraintViolationException excecao) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErroApiResposta("REQUISICAO_INVALIDA", excecao.getMessage(), OffsetDateTime.now()));
+    }
 
     @ExceptionHandler(ContaNaoEncontradaExcecao.class)
     public ResponseEntity<ErroApiResposta> tratarContaNaoEncontrada(ContaNaoEncontradaExcecao excecao) {
