@@ -2,6 +2,7 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -16,16 +17,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
-@RequestMapping("/v1/saldos")
+@RequestMapping("/v1/contas")
 public class SaldoContaControlador {
 
     private final ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
+    private final Validator validator;
 
-    public SaldoContaControlador(ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada) {
+    public SaldoContaControlador(
+            ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada,
+            Validator validator
+    ) {
         this.consultarSaldoContaPortaEntrada = consultarSaldoContaPortaEntrada;
+        this.validator = validator;
     }
 
-    @GetMapping
+    @GetMapping("/{idConta}/saldo")
     public ResponseEntity<SaldoConta> consultar(
             @Valid @ModelAttribute ConsultarSaldoContaRequisicao requisicao,
             @RequestHeader("X-Id-Titular")
