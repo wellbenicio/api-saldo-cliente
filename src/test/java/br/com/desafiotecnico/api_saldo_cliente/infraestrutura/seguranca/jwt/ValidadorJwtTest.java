@@ -19,14 +19,15 @@ class ValidadorJwtTest {
     private static final String SEGREDO_VALIDO = "segredo-jwt-api-saldo-cliente-2026-chave-segura";
 
     @Test
-    void deveFazerParsingDosClaimsQuandoTokenForValido() {
+    void deveFazerParsingDosClaimsNecessariosParaUsuarioAutenticadoQuandoTokenForValido() {
         ValidadorJwt validadorJwt = new ValidadorJwt(SEGREDO_VALIDO);
-        String token = gerarTokenAssinado(SEGREDO_VALIDO, "titular-001", "conta:saldo:consultar");
+        String token = gerarTokenAssinado(SEGREDO_VALIDO, "titular-001", "12345678900", "conta:saldo:consultar conta:extrato:consultar");
 
         Claims claims = validadorJwt.extrairClaims(token);
 
         assertThat(claims.getSubject()).isEqualTo("titular-001");
-        assertThat(claims.get("escopo", String.class)).isEqualTo("conta:saldo:consultar");
+        assertThat(claims.get("documento", String.class)).isEqualTo("12345678900");
+        assertThat(claims.get("escopo", String.class)).isEqualTo("conta:saldo:consultar conta:extrato:consultar");
     }
 
     @Test
@@ -38,12 +39,13 @@ class ValidadorJwtTest {
                 .hasMessage("Token JWT inválido ou expirado.");
     }
 
-    private String gerarTokenAssinado(String segredo, String sujeito, String escopo) {
+    private String gerarTokenAssinado(String segredo, String sujeito, String documento, String escopo) {
         Instant agora = Instant.now();
         SecretKey chave = Keys.hmacShaKeyFor(segredo.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .subject(sujeito)
+                .claim("documento", documento)
                 .claim("escopo", escopo)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(5, ChronoUnit.MINUTES)))

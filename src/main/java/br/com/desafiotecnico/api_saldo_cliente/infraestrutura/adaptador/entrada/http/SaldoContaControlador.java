@@ -6,18 +6,19 @@ import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.dto.SaldoContaSaidaDto;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
 import jakarta.validation.constraints.NotBlank;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.PrincipalConta;
 import jakarta.validation.constraints.Size;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import java.security.Principal;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.security.Principal;
+
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Validated
 @RestController
@@ -59,9 +60,15 @@ public class SaldoContaControlador {
     }
 
     private UsuarioAutenticado obterUsuarioAutenticado(Principal principal) {
-        if (!(principal instanceof UsuarioAutenticado usuarioAutenticado)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
+        Object principalSeguranca = principal;
+        if (principal instanceof Authentication autenticacao) {
+            principalSeguranca = autenticacao.getPrincipal();
         }
+
+        if (!(principalSeguranca instanceof UsuarioAutenticado usuarioAutenticado)) {
+            throw new ResponseStatusException(UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
+        }
+
         return usuarioAutenticado;
     }
 }
