@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -45,8 +47,7 @@ public class FiltroAutenticacaoJwt extends OncePerRequestFilter {
         String cabecalhoAutorizacao = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (cabecalhoAutorizacao == null || !cabecalhoAutorizacao.startsWith(PREFIXO_BEARER)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token JWT ausente ou inválido.");
-            return;
+            throw new InsufficientAuthenticationException("Token JWT ausente ou inválido.");
         }
 
         String token = cabecalhoAutorizacao.substring(PREFIXO_BEARER.length());
@@ -63,7 +64,7 @@ public class FiltroAutenticacaoJwt extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (TokenJwtInvalidoExcecao excecao) {
             SecurityContextHolder.clearContext();
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token JWT inválido ou expirado.");
+            throw new BadCredentialsException("Token JWT inválido ou expirado.", excecao);
         }
     }
 
