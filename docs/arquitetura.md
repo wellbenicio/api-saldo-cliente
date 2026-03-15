@@ -10,12 +10,13 @@ Camadas:
 - **Compartilhado**: tratamento global de erro e objetos transversais.
 
 ## Fluxo da API
-1. Cliente autenticado chama endpoint de consulta de saldo.
-2. Adaptador HTTP recebe os dados de conta e titular.
-3. Porta de entrada da aplicação executa caso de uso de consulta.
-4. Caso de uso consulta porta de saída de saldo.
-5. Resultado retorna ao adaptador HTTP.
-6. Erros de domínio são tratados no handler global.
+1. Cliente envia requisição ao endpoint de saldo com `Authorization: Bearer <token JWT>`.
+2. Camada de segurança valida o token JWT no fluxo de autenticação (sem provedor real nesta fase, mas com contrato definido para evolução).
+3. Após validação, o sistema monta o principal `UsuarioAutenticado` com `idCliente`, `documento` e `perfis/scopes`.
+4. Adaptador HTTP encaminha `idConta` e contexto do usuário autenticado para a porta de entrada da aplicação.
+5. Caso de uso executa a regra de autorização por titularidade, verificando se o usuário autenticado é titular da conta consultada.
+6. Se autorizado, o caso de uso consulta a porta de saída de saldo e devolve resposta de sucesso.
+7. Se não autorizado, a aplicação retorna erro de acesso; demais erros de domínio seguem para o handler global.
 
 ## Fluxo batch
 1. Arquivo consolidado (~50GB) é disponibilizado no ambiente de arquivos (NFS).
