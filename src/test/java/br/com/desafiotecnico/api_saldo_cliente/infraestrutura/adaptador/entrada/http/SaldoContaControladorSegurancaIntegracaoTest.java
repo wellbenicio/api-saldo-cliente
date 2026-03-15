@@ -51,7 +51,7 @@ class SaldoContaControladorSegurancaIntegracaoTest {
     }
 
     @Test
-    void deveRetornar401QuandoTokenInvalidoOuAusente() throws Exception {
+    void deveRetornar401QuandoTokenInvalido() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized())
