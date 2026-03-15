@@ -18,7 +18,7 @@ public class RepositorioSaldoContaMemoriaAdaptador implements RepositorioSaldoCo
 
     public RepositorioSaldoContaMemoriaAdaptador() {
         Conta contaExemplo = new Conta("12345", "titular-001");
-        saldos.put(contaExemplo.idConta(), new SaldoConta(contaExemplo, new BigDecimal("1500.00"), OffsetDateTime.now()));
+        saldos.put(contaExemplo.idConta(), new SaldoConta(contaExemplo, new BigDecimal("1500.00"), "BRL", OffsetDateTime.now()));
     }
 
     @Override
