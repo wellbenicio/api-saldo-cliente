@@ -8,11 +8,12 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -31,11 +32,22 @@ public class TratadorGlobalExcecao {
         return respostaRequisicaoInvalida(detalhes);
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErroApiResposta> tratarErroValidacaoConstraint(ConstraintViolationException excecao) {
-        List<DetalheErroValidacao> detalhes = excecao.getConstraintViolations()
+    @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
+    public ResponseEntity<ErroApiResposta> tratarErroValidacaoConstraint(Exception excecao) {
+        if (excecao instanceof ConstraintViolationException constraintViolationException) {
+            List<DetalheErroValidacao> detalhes = constraintViolationException.getConstraintViolations()
+                    .stream()
+                    .map(violacao -> new DetalheErroValidacao(violacao.getPropertyPath().toString(), violacao.getMessage()))
+                    .toList();
+
+            return respostaRequisicaoInvalida(detalhes);
+        }
+
+        HandlerMethodValidationException handlerMethodValidationException = (HandlerMethodValidationException) excecao;
+        List<DetalheErroValidacao> detalhes = handlerMethodValidationException.getAllValidationResults()
                 .stream()
-                .map(violacao -> new DetalheErroValidacao(violacao.getPropertyPath().toString(), violacao.getMessage()))
+                .flatMap(validacao -> validacao.getResolvableErrors().stream()
+                        .map(erro -> new DetalheErroValidacao(validacao.getMethodParameter().getParameterName(), erro.getDefaultMessage())))
                 .toList();
 
         return respostaRequisicaoInvalida(detalhes);
