@@ -13,9 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -47,6 +48,9 @@ class SaldoContaControladorValidacaoTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private FiltroAutenticacaoJwt filtroAutenticacaoJwt;
 
     @MockitoBean
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
@@ -113,12 +117,23 @@ class SaldoContaControladorValidacaoTest {
                 .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
     }
 
+    @Test
+    void deveRetornarErroPadronizadoQuandoTitularInvalido() throws Exception {
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .header("X-Id-Titular", "abc")
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
+                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idTitular"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
+    }
 
     private void assertSaidaSaldoContaDto(
             RequestBuilder requisicao,
             String idConta,
             String idTitular,
-            Double valor,
+            double valor,
             String moeda,
             String atualizadoEm
     ) throws Exception {
@@ -131,7 +146,4 @@ class SaldoContaControladorValidacaoTest {
                 .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value(atualizadoEm));
     }
 
-    private UsuarioAutenticado usuarioAutenticado(String idCliente) {
-        return new UsuarioAutenticado(idCliente, "12345678900", Set.of("saldo:read"));
-    }
 }

@@ -1,6 +1,6 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao;
 
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.FiltroAutenticacaoCabecalho;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,28 +12,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class ConfiguracaoSeguranca {
 
-    private final FiltroAutenticacaoCabecalho filtroAutenticacaoCabecalho;
-
-    public ConfiguracaoSeguranca(FiltroAutenticacaoCabecalho filtroAutenticacaoCabecalho) {
-        this.filtroAutenticacaoCabecalho = filtroAutenticacaoCabecalho;
-    }
-
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            ConversorJwtAutenticacao conversorJwtAutenticacao,
-            ManipuladorAutenticacaoNaoAutenticado manipuladorAutenticacaoNaoAutenticado,
-            ManipuladorAcessoNegado manipuladorAcessoNegado
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, FiltroAutenticacaoJwt filtroAutenticacaoJwt) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/v1/contas/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .addFilterBefore(filtroAutenticacaoCabecalho, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable);
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .addFilterBefore(filtroAutenticacaoJwt, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
