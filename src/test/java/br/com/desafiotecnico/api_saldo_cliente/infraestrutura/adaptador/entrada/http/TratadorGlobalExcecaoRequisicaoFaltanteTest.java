@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,9 +19,6 @@ class TratadorGlobalExcecaoRequisicaoFaltanteTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private FiltroAutenticacaoJwt filtroAutenticacaoJwt;
 
     @Test
     void deveRetornarErroPadronizadoQuandoCabecalhoObrigatorioNaoForInformado() throws Exception {
