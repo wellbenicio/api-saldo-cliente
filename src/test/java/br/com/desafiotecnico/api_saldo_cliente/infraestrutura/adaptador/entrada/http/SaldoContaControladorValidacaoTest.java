@@ -89,7 +89,9 @@ class SaldoContaControladorValidacaoTest {
         mockMvc.perform(get("/v1/contas/12345/saldo"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."));
+                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' é obrigatório."));
     }
 
     @Test
@@ -99,7 +101,9 @@ class SaldoContaControladorValidacaoTest {
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
+                .andExpect(jsonPath("$.mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("idConta"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Parâmetro 'idConta' deve ter entre 5 e 20 caracteres."));
     }
 
     @Test
@@ -109,23 +113,9 @@ class SaldoContaControladorValidacaoTest {
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"))
-                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
+                .andExpect(jsonPath("$.mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."))
+                .andExpect(jsonPath("$.detalhes[0].campo").value("X-Id-Titular"))
+                .andExpect(jsonPath("$.detalhes[0].mensagem").value("Cabeçalho 'X-Id-Titular' deve ter entre 5 e 20 caracteres."));
     }
 
-    private void assertSaidaSaldoContaDto(
-            org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder requisicao,
-            String idConta,
-            String idClienteTitular,
-            double valorSaldo,
-            String moeda,
-            String dataHoraUltimaAtualizacao
-    ) throws Exception {
-        mockMvc.perform(requisicao)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.idConta").value(idConta))
-                .andExpect(jsonPath("$.idClienteTitular").value(idClienteTitular))
-                .andExpect(jsonPath("$.valorSaldo").value(valorSaldo))
-                .andExpect(jsonPath("$.moeda").value(moeda))
-                .andExpect(jsonPath("$.dataHoraUltimaAtualizacao").value(dataHoraUltimaAtualizacao));
-    }
 }
