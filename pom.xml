@@ -63,8 +63,6 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.16</version>
 		</dependency>
-
-
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
@@ -114,6 +112,58 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.14</version>
+				<configuration>
+					<excludes>
+						<!-- Classe main do Spring Boot -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/ApiSaldoClienteApplication.class</exclude>
+
+						<!-- DTOs, Records e objetos de valor sem lógica -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/entrada/http/dto/**</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/compartilhado/web/ErroApiResposta.class</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/compartilhado/web/ErroApiResposta$*.class</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/batch/componentes/RegistroArquivoSaldoBatch.class</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/seguranca/PrincipalConta.class</exclude>
+
+						<!-- Exceções simples de domínio -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/dominio/excecao/**</exclude>
+
+						<!-- Interfaces de portas (sem implementação) -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/aplicacao/porta/**</exclude>
+
+						<!-- Entidades JPA (getters/setters gerados) -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/saida/repositorio/jpa/SaldoContaJpaEntidade.class</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/saida/repositorio/jpa/EventoProcessadoJpaEntidade.class</exclude>
+
+						<!-- Interfaces Spring Data JPA (implementação gerada pelo framework) -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/saida/repositorio/jpa/SaldoContaJpaRepositorio.class</exclude>
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/saida/repositorio/jpa/EventoProcessadoJpaRepositorio.class</exclude>
+
+						<!-- Classes de configuração Spring -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/configuracao/**</exclude>
+
+						<!-- Adaptador AWS (requer infraestrutura real) -->
+						<exclude>br/com/desafiotecnico/api_saldo_cliente/infraestrutura/adaptador/saida/repositorio/aws/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
