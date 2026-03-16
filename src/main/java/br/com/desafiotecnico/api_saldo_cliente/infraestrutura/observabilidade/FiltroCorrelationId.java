@@ -13,10 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * Convenção deste desafio: nomes em português por escolha simbólica.
- * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
- */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class FiltroCorrelationId extends OncePerRequestFilter {
