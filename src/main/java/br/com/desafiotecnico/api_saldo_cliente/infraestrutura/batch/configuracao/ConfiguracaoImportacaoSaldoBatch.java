@@ -5,6 +5,7 @@ import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.RegistroArquivoSaldoBatch;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.MonitoramentoFalhaBatchListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -38,13 +39,15 @@ public class ConfiguracaoImportacaoSaldoBatch {
         PlatformTransactionManager transactionManager,
         ItemReader<RegistroArquivoSaldoBatch> leitorRegistroArquivoSaldoBatch,
         ProcessadorRegistroSaldoBatch processadorRegistroSaldoBatch,
-        EscritorSaldoContaBatch escritorSaldoContaBatch
+        EscritorSaldoContaBatch escritorSaldoContaBatch,
+        MonitoramentoFalhaBatchListener monitoramentoFalhaBatchListener
     ) {
         return new StepBuilder("passoImportacaoSaldoConsolidado", jobRepository)
             .<RegistroArquivoSaldoBatch, SaldoConta>chunk(500, transactionManager)
             .reader(leitorRegistroArquivoSaldoBatch)
             .processor(processadorRegistroSaldoBatch)
             .writer(escritorSaldoContaBatch)
+            .listener(monitoramentoFalhaBatchListener)
             .build();
     }
 

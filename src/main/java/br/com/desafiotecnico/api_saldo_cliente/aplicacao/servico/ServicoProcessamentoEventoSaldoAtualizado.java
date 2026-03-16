@@ -8,6 +8,7 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.EventoIntegracaoSaldoAtualizado;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,15 +26,18 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida;
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida;
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
 
     public ServicoProcessamentoEventoSaldoAtualizado(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
             RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida,
-            PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida
+            PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida,
+            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.repositorioEventoProcessadoPortaSaida = repositorioEventoProcessadoPortaSaida;
         this.publicadorEventoIntegracaoSaldoPortaSaida = publicadorEventoIntegracaoSaldoPortaSaida;
+        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
     }
 
     @Override
@@ -53,12 +57,17 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
             return;
         }
 
-        repositorioSaldoContaPortaSaida.salvar(saldoNovo);
-        repositorioEventoProcessadoPortaSaida.registrarProcessamento(comando.idEvento(), comando.origem());
-        publicadorEventoIntegracaoSaldoPortaSaida.publicar(criarEventoIntegracao(comando, saldoNovo));
+        try {
+            repositorioSaldoContaPortaSaida.salvar(saldoNovo);
+            repositorioEventoProcessadoPortaSaida.registrarProcessamento(comando.idEvento(), comando.origem());
+            publicadorEventoIntegracaoSaldoPortaSaida.publicar(criarEventoIntegracao(comando, saldoNovo));
 
-        LOGGER.info("Saldo atualizado por evento quase em tempo real. idEvento={}, idConta={}, ocorridoEm={}",
-                comando.idEvento(), comando.idConta(), comando.ocorridoEm());
+            LOGGER.info("Saldo atualizado por evento quase em tempo real. idEvento={}, idConta={}, ocorridoEm={}",
+                    comando.idEvento(), comando.idConta(), comando.ocorridoEm());
+        } catch (Exception excecao) {
+            observabilidadeMetricasAplicacao.incrementarFalhasProcessamentoEvento();
+            throw excecao;
+        }
 
         // Evolução futura recomendada: padrão Outbox para garantir consistência transacional
         // entre persistência local e publicação assíncrona externa.

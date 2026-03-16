@@ -24,6 +24,7 @@ public class ConfiguracaoSeguranca {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/metrics", "/actuator/metrics/**").permitAll()
                         .requestMatchers("/v1/contas/**").authenticated()
                         .anyRequest().permitAll()
                 )
