@@ -4,10 +4,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
-/**
- * Convenção deste desafio: nomes em português por escolha simbólica.
- * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
- */
 @Component
 public class ObservabilidadeMetricasAplicacao {
 

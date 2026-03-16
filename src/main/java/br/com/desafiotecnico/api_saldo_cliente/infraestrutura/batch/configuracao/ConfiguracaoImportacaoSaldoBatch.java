@@ -23,9 +23,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Profile("batch")
 public class ConfiguracaoImportacaoSaldoBatch {
 
-    // Observação: aqui os nomes seguem o padrão do time em português; em produção,
-    // nomes técnicos e de infraestrutura tendem a ser padronizados em inglês.
-
     @Bean
     public Job jobImportacaoSaldoConsolidado(JobRepository jobRepository, Step passoImportacaoSaldoConsolidado) {
         return new JobBuilder("jobImportacaoSaldoConsolidado", jobRepository)

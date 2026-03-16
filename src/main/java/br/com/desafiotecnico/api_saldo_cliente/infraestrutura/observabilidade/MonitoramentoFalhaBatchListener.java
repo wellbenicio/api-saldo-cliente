@@ -8,10 +8,6 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/**
- * Convenção deste desafio: nomes em português por escolha simbólica.
- * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
- */
 @Component
 @Profile("batch")
 public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
