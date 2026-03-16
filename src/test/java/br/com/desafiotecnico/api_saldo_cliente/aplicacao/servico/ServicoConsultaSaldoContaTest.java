@@ -7,6 +7,7 @@ import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutoriza
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

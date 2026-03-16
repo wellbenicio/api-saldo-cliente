@@ -20,11 +20,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-@Profile("batch")
+@Profile("batch | local-batch")
 public class ConfiguracaoImportacaoSaldoBatch {
-
-    // Observação: aqui os nomes seguem o padrão do time em português; em produção,
-    // nomes técnicos e de infraestrutura tendem a ser padronizados em inglês.
 
     @Bean
     public Job jobImportacaoSaldoConsolidado(JobRepository jobRepository, Step passoImportacaoSaldoConsolidado) {
@@ -52,7 +49,7 @@ public class ConfiguracaoImportacaoSaldoBatch {
     }
 
     @Bean
-    public FlatFileItemReader<RegistroArquivoSaldoBatch> leitorRegistroArquivoSaldoBatch(
+    public FlatFileItemReader<RegistroArquivoSaldoBatch> leitorArquivoSaldoBatchItemReader(
         LeitorRegistroArquivoSaldoBatch leitorRegistroArquivoSaldoBatch,
         @Value("${saldo.batch.arquivo-entrada:./dados/saldos-consolidados.csv}") String caminhoArquivo,
         @Value("${saldo.batch.delimitador:|}") String delimitador
