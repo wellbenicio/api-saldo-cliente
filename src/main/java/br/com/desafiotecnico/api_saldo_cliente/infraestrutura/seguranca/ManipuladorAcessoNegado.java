@@ -1,6 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca;
 
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.ErroApiResposta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,13 +18,20 @@ import java.time.OffsetDateTime;
 public class ManipuladorAcessoNegado implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
 
-    public ManipuladorAcessoNegado(ObjectMapper objectMapper) {
+    public ManipuladorAcessoNegado(
+            ObjectMapper objectMapper,
+            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+    ) {
         this.objectMapper = objectMapper;
+        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
     }
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException {
+        observabilidadeMetricasAplicacao.incrementarNegacoesAcesso();
+
         ErroApiResposta erroApiResposta = new ErroApiResposta(
                 "ACESSO_NEGADO",
                 "Usuário autenticado sem permissão para acessar este recurso.",
