@@ -1,10 +1,11 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.saida.batch;
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.LeitorArquivoBatchSaldoPortaSaida;
-import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao.PropriedadesBatchSaldo;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,35 +15,44 @@ import java.util.stream.Stream;
 @Component
 public class LeitorArquivoBatchSaldoNfsAdaptador implements LeitorArquivoBatchSaldoPortaSaida {
 
-    private final LeitorRegistroArquivoSaldoBatchItemReader itemReader;
-    private final ProcessadorRegistroArquivoSaldoBatchItemProcessor itemProcessor;
+    private final LeitorRegistroArquivoSaldoBatch leitorRegistroArquivoSaldoBatch;
+    private final ProcessadorRegistroSaldoBatch processadorRegistroSaldoBatch;
+    private final PropriedadesBatchSaldo propriedadesBatchSaldo;
 
     public LeitorArquivoBatchSaldoNfsAdaptador(
-            LeitorRegistroArquivoSaldoBatchItemReader itemReader,
-            ProcessadorRegistroArquivoSaldoBatchItemProcessor itemProcessor
+            LeitorRegistroArquivoSaldoBatch leitorRegistroArquivoSaldoBatch,
+            ProcessadorRegistroSaldoBatch processadorRegistroSaldoBatch,
+            PropriedadesBatchSaldo propriedadesBatchSaldo
     ) {
-        this.itemReader = itemReader;
-        this.itemProcessor = itemProcessor;
+        this.leitorRegistroArquivoSaldoBatch = leitorRegistroArquivoSaldoBatch;
+        this.processadorRegistroSaldoBatch = processadorRegistroSaldoBatch;
+        this.propriedadesBatchSaldo = propriedadesBatchSaldo;
     }
 
     @Override
     public Stream<SaldoConta> lerSaldosConsolidados() {
-        // Em produção: configurar endpoint NFS, caminho de arquivo e credenciais via variáveis de ambiente e secret manager.
+        var itemReader = leitorRegistroArquivoSaldoBatch.criarLeitor(
+                propriedadesBatchSaldo.caminhoArquivoEntrada().toString(),
+                "|"
+        );
         List<SaldoConta> saldos = new ArrayList<>();
 
         try {
+            itemReader.open(new ExecutionContext());
             while (true) {
                 var registro = itemReader.read();
                 if (registro == null) {
                     break;
                 }
-                var saldo = itemProcessor.process(registro);
+                var saldo = processadorRegistroSaldoBatch.process(registro);
                 if (saldo != null) {
                     saldos.add(saldo);
                 }
             }
         } catch (Exception e) {
             throw new IllegalStateException("Falha ao processar arquivo de saldo batch", e);
+        } finally {
+            itemReader.close();
         }
 
         return saldos.stream();

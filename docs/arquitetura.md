@@ -108,9 +108,9 @@ sequenceDiagram
 
 ## Fluxo batch
 1. Arquivo consolidado (~50GB) é disponibilizado no ambiente de arquivos (NFS).
-2. Adaptador de leitura batch representa o ponto de integração com esse arquivo.
-3. Em implementação futura, o conteúdo lido será processado e persistido pelo fluxo de aplicação.
-4. Neste estágio, a estrutura está preparada sem processamento complexo.
+2. A trilha oficial é o pipeline Spring Batch (`LeitorRegistroArquivoSaldoBatch` + `ProcessadorRegistroSaldoBatch` + `EscritorSaldoContaBatch`).
+3. O `LeitorArquivoBatchSaldoNfsAdaptador` reutiliza esse pipeline oficial para leitura e transformação do arquivo consolidado.
+4. Não há trilha legada paralela para leitura/processamento; o processamento batch segue uma única abordagem.
 
 ### Sequência: fluxo batch consolidado
 
