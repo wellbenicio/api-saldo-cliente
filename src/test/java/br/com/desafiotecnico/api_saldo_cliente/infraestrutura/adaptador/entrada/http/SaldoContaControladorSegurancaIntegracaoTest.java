@@ -67,14 +67,14 @@ class SaldoContaControladorSegurancaIntegracaoTest {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    private String gerarToken(String sujeito, String documento, String escopo) {
+    private String gerarToken(String sujeito, String documento, String scope) {
         Instant agora = Instant.now();
         SecretKey chave = Keys.hmacShaKeyFor(SEGREDO.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .subject(sujeito)
                 .claim("documento", documento)
-                .claim("escopo", escopo)
+                .claim("scope", scope)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
                 .signWith(chave)
