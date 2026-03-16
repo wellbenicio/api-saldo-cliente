@@ -6,15 +6,21 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrada {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
 
-    public ServicoConsultaSaldoConta(RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida) {
+    public ServicoConsultaSaldoConta(
+            RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
+            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+    ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
+        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
     }
 
     @Override
@@ -24,9 +30,11 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
                 .orElseThrow(() -> new ContaNaoEncontradaExcecao(comando.idConta()));
 
         if (!saldoConta.conta().idTitular().equals(comando.idTitularSolicitante())) {
+            observabilidadeMetricasAplicacao.incrementarNegacoesAcesso();
             throw new AcessoNaoAutorizadoContaExcecao(comando.idConta(), comando.idTitularSolicitante());
         }
 
+        observabilidadeMetricasAplicacao.incrementarConsultasSaldo();
         return saldoConta;
     }
 }
