@@ -1,111 +1,97 @@
 # API Saldo Cliente
 
-## Quickstart
+API backend em **Java 21 + Spring Boot** para consulta de saldo por conta, com foco em arquitetura hexagonal, segurança por JWT, processamento batch e observabilidade.
 
-### 1) Pré-requisitos
-- Java 21 instalado.
-- Maven Wrapper disponível no projeto (`./mvnw`).
-- Portas usadas localmente:
-  - `8080`: API HTTP.
+## Sumário
+- [Visão geral](#visão-geral)
+- [Arquitetura](#arquitetura)
+- [Pré-requisitos](#pré-requisitos)
+- [Execução local](#execução-local)
+- [Perfis de execução](#perfis-de-execução)
+- [API HTTP](#api-http)
+- [Fluxo batch](#fluxo-batch)
+- [Consumo de eventos](#consumo-de-eventos)
+- [Segurança](#segurança)
+- [Observabilidade](#observabilidade)
+- [Documentação complementar](#documentação-complementar)
+- [Infraestrutura (Terraform)](#infraestrutura-terraform)
 
-### 2) Bootstrap local
-1. **Build do projeto**
-   - `./mvnw clean install`
-2. **Execução da API em profile local**
-   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
-   - (alternativa default já suportada) `./mvnw spring-boot:run`
-3. **Execução de testes**
-   - `./mvnw test`
+## Visão geral
+Este projeto simula um cenário bancário no qual:
+- um arquivo batch consolidado de saldos é processado periodicamente;
+- eventos de atualização de saldo chegam por mensageria (simulada);
+- a consulta de saldo via API é permitida apenas ao titular da conta.
 
-### 3) Critério de sucesso esperado
-- Aplicação sobe sem erros e o healthcheck responde em `http://localhost:8080/actuator/health`.
+As integrações externas (AWS, MQ, NFS) estão representadas como **adaptadores/configurações conceituais**, sem conexão real neste repositório.
 
-### 4) Próximos passos (seções avançadas)
-- Batch: seção [Fluxo batch oficial](#fluxo-batch-oficial).
-- AWS exemplo: seções [Persistência por profile](#persistência-por-profile) e [Infraestrutura (esqueleto Terraform)](#infraestrutura-esqueleto-terraform).
-- ADRs: seção [Decisões arquiteturais consolidadas](#decisões-arquiteturais-consolidadas) e diretório `docs/adr/`.
+## Arquitetura
+A base segue **arquitetura hexagonal (ports and adapters)**:
+- `dominio`: modelos e regras de negócio;
+- `aplicacao`: casos de uso e portas de entrada/saída;
+- `infraestrutura`: adaptadores técnicos (HTTP, batch, segurança, persistência, mensageria);
+- `compartilhado`: componentes transversais (ex.: tratamento global de exceções).
 
-## Objetivo do projeto
-Este projeto representa uma API backend em Java 21 com Spring Boot para consulta de saldo de conta por canais bancários, com foco em qualidade técnica, arquitetura e clareza de evolução para ambiente corporativo.
+## Pré-requisitos
+- Java 21
+- Maven Wrapper (`./mvnw`)
+- Porta local:
+  - `8080` (API HTTP)
 
-## Contexto do desafio
-- Ecossistema bancário distribuído, com legado em mainframe.
-- Arquivo batch consolidado de saldos (~50GB) gerado às 2AM e disponibilizado via servidor de arquivos/NFS.
-- Mensagens de atualização de saldo via MQ a cada nova transação.
-- Consulta de saldo permitida somente ao titular da conta.
-- Necessidade de alta disponibilidade, observabilidade e publicação de saldo atualizado para outros sistemas na AWS.
-- Neste repositório, integrações com AWS/MQ/NFS são estruturadas como adaptadores e configurações, sem integração real.
+## Execução local
+### Build
+```bash
+./mvnw clean install
+```
 
-## Visão geral da arquitetura
-A solução adota arquitetura hexagonal (ports and adapters), com separação em:
-- `dominio`: regras e modelos centrais.
-- `aplicacao`: casos de uso e portas de entrada/saída.
-- `infraestrutura`: adaptadores técnicos (HTTP, batch, mensageria, persistência).
-- `compartilhado`: componentes transversais (ex.: tratamento global de erro).
+### Subir API (perfil local)
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+```
+> Alternativa: `./mvnw spring-boot:run` (default local do projeto)
 
-## Separação explícita entre API e Batch
-- **API (consulta online/autorização de titularidade):** atende requisições síncronas de saldo, valida identidade via JWT e aplica autorização de titularidade no caso de uso.
-- **Batch (carga massiva consolidada e reconciliação):** fluxo oficial implementado com Spring Batch (`FlatFileItemReader` + processor + writer) para processar arquivo consolidado sem bloquear o fluxo online.
-- **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
+### Testes
+```bash
+./mvnw test
+```
 
-## Segurança nesta fase
-- A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.
-- O **único fluxo de autenticação ativo** usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` com:
-  - identificador do cliente por `idCliente` (preferencial) ou `sub`;
-  - documento obrigatório por `documento`, `cpf` ou `cnpj`;
-  - perfis/scopes extraídos de authorities e dos claims `perfisOuScopes`, `scope` ou `scp`.
-- Não há filtro JWT customizado nem validador JWT legado participando da autenticação em runtime.
-- A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta (comparação entre o `idTitular` da conta e o `idCliente` autenticado).
-- Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
+### Healthcheck esperado
+```text
+http://localhost:8080/actuator/health
+```
 
+## Perfis de execução
+- `local`: API web + persistência local (JPA/H2)
+- `batch`: execução do job batch com web desativada (`web-application-type: none`)
+- `aws-exemplo`: ativa componentes conceituais de integração AWS
 
-## Estratégia de testes
-- **Teste unitário (aplicação/domínio):** valida a regra do caso de uso `ServicoConsultaSaldoConta` de forma isolada, com mock/stub da porta de saída (`RepositorioSaldoContaPortaSaida`) para garantir cenários de titular autorizado, titular não autorizado e conta inexistente.
-- **Teste de integração (HTTP + segurança):** valida a cadeia completa da API no endpoint `/v1/contas/{idConta}/saldo`, incluindo autenticação/autorização e contratos HTTP (status 200/403/401), além do payload de erro retornado pela camada web/security.
+### Combinações úteis
+**Batch com persistência local**
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local
+```
 
-## Persistência por profile
-- **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
-- **aws-exemplo** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+**Batch com arquivo customizado**
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.diretorio-entrada=/tmp --saldo.batch.nome-arquivo=saldos.csv --saldo.batch.delimitador=|"
+```
 
-> Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
+**Perfil AWS de exemplo**
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo
+```
 
-
-## Estratégia explícita de profiles
-- `local`: execução padrão da API com adaptadores JPA/H2 e web app ativo.
-- `batch`: habilita o job batch e desativa camada web (`web-application-type: none`).
-- `aws-exemplo`: ativa apenas os componentes de exemplo para persistência AWS (DynamoDB), sem integração real.
-
-> Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
-
-## Comandos de execução
-- **Build do projeto:**
-  - `./mvnw clean install`
-- **API local (default / onboarding):**
-  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
-  - ou `./mvnw spring-boot:run`
-- **Testes:**
-  - `./mvnw test`
-- **Batch com persistência local (recomendado no repositório):**
-  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
-- Batch com arquivo customizado:
-  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.diretorio-entrada=/tmp --saldo.batch.nome-arquivo=saldos.csv --saldo.batch.delimitador=|"`
-- Profile AWS de exemplo:
-  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
-
-## Como consumir a API
-
+## API HTTP
 ### Endpoint principal
-- `GET /v1/contas/{idConta}/saldo`
+`GET /v1/contas/{idConta}/saldo`
 
-### Exemplo de requisição com JWT Bearer
+### Exemplo de requisição
 ```bash
 curl -X GET "http://localhost:8080/v1/contas/12345/saldo" \
   -H "Authorization: Bearer <seu-jwt-aqui>" \
   -H "Accept: application/json"
 ```
 
-### Exemplos resumidos de resposta
-
+### Respostas resumidas
 **200 OK**
 ```json
 {
@@ -134,77 +120,56 @@ curl -X GET "http://localhost:8080/v1/contas/12345/saldo" \
 }
 ```
 
-### Observação rápida sobre claims JWT esperadas
-- A conversão do JWT para o principal autenticado está em `infraestrutura.seguranca.ConversorJwtAutenticacao`.
-- Em resumo, a API espera um identificador de cliente (`idCliente` ou `sub`) e documento (`documento`, `cpf` ou `cnpj`), além de perfis/scopes (`perfisOuScopes`, `scope` ou `scp`) para compor authorities.
-- Para contexto arquitetural e decisões de segurança, consulte os ADRs em `docs/adr/`, especialmente `ADR-006-seguranca-acesso-saldo-autenticacao-autorizacao.md` e `ADR-008-remocao-jwt-legado.md`.
+## Fluxo batch
+Fluxo oficial no pacote `infraestrutura.batch`:
+1. `ConfiguracaoImportacaoSaldoBatch` define `Job`/`Step`.
+2. `LeitorRegistroArquivoSaldoBatch` lê arquivo delimitado.
+3. `ProcessadorRegistroSaldoBatch` transforma em `SaldoConta`.
+4. `EscritorSaldoContaBatch` persiste via porta `RepositorioSaldoContaPortaSaida`.
 
-## Consumo de eventos de saldo atualizado (quase em tempo real)
+Propriedades principais (`PropriedadesBatchSaldo`):
+- `saldo.batch.diretorio-entrada`
+- `saldo.batch.nome-arquivo`
+- `saldo.batch.delimitador`
 
-Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
-
-## Fluxo batch oficial
-
-O fluxo batch oficial desta base está centralizado no pacote `infraestrutura.batch`:
-
-1. `ConfiguracaoImportacaoSaldoBatch` define o `Job` e o `Step` de importação.
-2. `LeitorRegistroArquivoSaldoBatch` cria `FlatFileItemReader` para ler CSV/arquivo delimitado.
-3. `ProcessadorRegistroSaldoBatch` converte o registro bruto para `SaldoConta` de domínio.
-4. `EscritorSaldoContaBatch` persiste os saldos pela porta `RepositorioSaldoContaPortaSaida`.
-
-> A trilha legada paralela de reader/processor/modelo batch foi removida para manter um único caminho de execução e testes.
-
-> A configuração de arquivo/delimitador fica centralizada em `PropriedadesBatchSaldo` (`saldo.batch.diretorio-entrada`, `saldo.batch.nome-arquivo`, `saldo.batch.delimitador`).
-
-### Mapeamento de classes batch
-
-- **Ativas (oficiais)**
-  - `infraestrutura.batch.configuracao.ConfiguracaoImportacaoSaldoBatch`
-  - `infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch`
-  - `infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch`
-  - `infraestrutura.batch.componentes.EscritorSaldoContaBatch`
-  - `infraestrutura.batch.componentes.RegistroArquivoSaldoBatch`
-
-- **Legadas (removidas da trilha principal)**
-  - `infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader`
-  - `infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor`
-  - `infraestrutura.batch.modelo.RegistroArquivoSaldoBatch`
-  - `infraestrutura.adaptador.saida.batch.LeitorArquivoBatchSaldoNfsAdaptador`
-
-Fluxo arquitetural:
-1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
-2. O adaptador chama a porta de entrada `ConsumirEventoSaldoAtualizadoPortaEntrada`.
-3. `ServicoProcessamentoEventoSaldoAtualizado` aplica regras de negócio:
+## Consumo de eventos
+Fluxo (mensageria simulada):
+1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe evento.
+2. Chamada da porta `ConsumirEventoSaldoAtualizadoPortaEntrada`.
+3. `ServicoProcessamentoEventoSaldoAtualizado` aplica regras:
    - idempotência por `idEvento`;
-   - ignorar evento duplicado;
-   - ignorar evento fora de ordem (desatualizado) para não sobrescrever saldo mais novo.
-4. Persistência é feita via `RepositorioSaldoContaPortaSaida`.
-5. Registro de evento processado via `RepositorioEventoProcessadoPortaSaida`.
+   - descarte de duplicados;
+   - descarte de eventos fora de ordem.
+4. Atualiza saldo via `RepositorioSaldoContaPortaSaida`.
+5. Registra evento via `RepositorioEventoProcessadoPortaSaida`.
 
-> Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
+## Segurança
+A autenticação utiliza **Spring Security OAuth2 Resource Server (JWT Bearer)** com `oauth2ResourceServer().jwt(...)`.
 
-## Decisões arquiteturais consolidadas
-- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês. Detalhes em `docs/adr/ADR-002-nomes-em-portugues.md`.
-- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`. Detalhes em `docs/adr/ADR-008-remocao-jwt-legado.md`.
+Conversão para principal de domínio (`PrincipalConta`) em `ConversorJwtAutenticacao` com:
+- identificador do cliente: `idCliente` (preferencial) ou `sub`;
+- documento obrigatório: `documento`, `cpf` ou `cnpj`;
+- authorities/scopes: `perfisOuScopes`, `scope` ou `scp`.
 
-## Observabilidade e operacionalização básica
-A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
+A autorização de negócio (titularidade) ocorre no caso de uso: o `idTitular` da conta deve corresponder ao `idCliente` autenticado.
 
-- **Spring Actuator** habilitado com `health`, `info` e `metrics`.
-- **Correlation ID** por requisição HTTP (`X-Correlation-Id`) com propagação no MDC.
-- **Logs estruturados** em JSON no console (`logback-spring.xml`).
-- **Métricas de aplicação**:
+## Observabilidade
+- Spring Actuator: `health`, `info`, `metrics`
+- Correlation ID via `X-Correlation-Id` com MDC
+- Logs estruturados JSON (`logback-spring.xml`)
+- Métricas:
   - `saldo_consultas_total`
   - `saldo_negacoes_acesso_total`
   - `saldo_falhas_batch_total`
   - `saldo_falhas_processamento_evento_total`
 
-Consulte documentação detalhada em: `docs/observabilidade.md`.
+## Documentação complementar
+- Arquitetura: `docs/arquitetura.md`
+- Decisões técnicas: `docs/decisoes-tecnicas.md`
+- Observabilidade: `docs/observabilidade.md`
+- Operação batch: `docs/operacao-batch.md`
+- ADRs: `docs/adr/`
+  - destaque para `ADR-006` (segurança) e `ADR-008` (remoção de JWT legado)
 
-## Infraestrutura (esqueleto Terraform)
-Foi incluída a pasta `infra/terraform/` com um **esqueleto comentado** para:
-- tópico SNS de alertas;
-- alarmes CloudWatch (ALB 5xx e métrica customizada de falha de evento);
-- variáveis/outputs básicos.
-
-> Como é um desafio técnico, os recursos AWS estão apenas modelados com comentários claros do que seria configurado em ambiente real (IAM, dimensions reais, KMS, endpoints corporativos, estado remoto etc.).
+## Infraestrutura (Terraform)
+Em `infra/terraform/` há um esqueleto comentado para referência conceitual (SNS, alarmes CloudWatch, variáveis/outputs), sem provisionamento real neste desafio.
