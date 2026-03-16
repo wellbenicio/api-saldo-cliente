@@ -3,6 +3,8 @@
 ## Visão geral
 Este projeto foi estruturado como um serviço central de saldo dentro de um ecossistema distribuído bancário, adotando arquitetura hexagonal para isolar regras de negócio de detalhes de infraestrutura.
 
+> **Nota desta avaliação:** as integrações com **NFS**, **MQ** e **AWS** estão representadas de forma **conceitual** nos diagramas e no texto. O desenho evidencia pontos de integração e responsabilidades arquiteturais, sem implicar implementação completa desses provedores neste repositório.
+
 Camadas:
 - **Domínio**: modelos e exceções do negócio de saldo.
 - **Aplicação**: portas e serviços de orquestração dos casos de uso.
@@ -15,6 +17,59 @@ Camadas:
 - **Batch (carga massiva consolidada e reconciliação):** fluxo assíncrono para ingestão de massa e reconciliação periódica, preparado para processar grandes volumes sem impacto direto na experiência online.
 - **Domínio compartilhado, responsabilidades diferentes:** ambos os fluxos usam o mesmo domínio e portas de aplicação, porém com objetivos operacionais distintos e ciclos de execução diferentes.
 
+## Diagrama de contexto (C4 simplificado)
+
+```mermaid
+flowchart LR
+    CB[Ator: Canal Bancário]
+    SCS[(Serviço Central de Saldo)]
+    LEG[Legado/Mainframe Batch]
+    MEN[Mensageria de Entrada\n(MQ conceitual)]
+    AWS[Consumidores Externos via AWS\n(SNS/SQS conceitual)]
+
+    CB -->|Consulta de saldo (API)| SCS
+    LEG -->|Arquivo consolidado (NFS conceitual)| SCS
+    MEN -->|Evento de atualização| SCS
+    SCS -->|Evento de integração de saldo| AWS
+```
+
+O contexto evidencia o serviço de saldo como núcleo da solução, recebendo tráfego síncrono (API), assíncrono (mensageria) e carga batch, além de publicar eventos para ecossistema externo via AWS em desenho conceitual.
+
+## Diagrama de componentes (hexagonal)
+
+```mermaid
+flowchart LR
+    subgraph Entrada[Adaptadores de Entrada]
+        HTTP[HTTP API]
+        MSG[Mensageria\n(MQ/JMS)]
+        BAT[Batch Leitor\n(NFS)]
+    end
+
+    subgraph Nucleo[Núcleo Hexagonal]
+        DOM[Domínio]
+        APP[Aplicação + Portas]
+        DOM --- APP
+    end
+
+    subgraph Saida[Adaptadores de Saída]
+        JPA[Repositório local/JPA]
+        DDB[DynamoDB\n(esqueleto)]
+        PUBLOG[Publicador Log]
+        PUBSNS[Publicador SNS\n(conceitual)]
+    end
+
+    HTTP --> APP
+    MSG --> APP
+    BAT --> APP
+
+    APP --> JPA
+    APP --> DDB
+    APP --> PUBLOG
+    APP --> PUBSNS
+```
+
+O componente segue arquitetura hexagonal: regras no núcleo e dependências para infraestrutura sempre orientadas por portas.
+
 ## Fluxo da API
 1. Cliente envia requisição ao endpoint de saldo com `Authorization: Bearer <token JWT>`.
 2. Camada de segurança valida o token JWT via Spring Security OAuth2 Resource Server.
@@ -24,11 +79,55 @@ Camadas:
 6. Se autorizado, o caso de uso consulta a porta de saída de saldo e devolve resposta de sucesso.
 7. Se não autorizado, a aplicação retorna erro de acesso; demais erros de domínio seguem para o handler global.
 
+### Sequência: consulta de saldo via API
+
+```mermaid
+sequenceDiagram
+    actor Canal as Canal Bancário
+    participant API as Adaptador HTTP
+    participant SEC as Segurança JWT
+    participant CONV as ConversorJwtAutenticacao
+    participant UC as Caso de Uso ConsultaSaldo
+    participant REP as Repositório Saldo
+
+    Canal->>API: GET /saldos/{idConta} + Bearer JWT
+    API->>SEC: Validar token
+    SEC->>CONV: Construir PrincipalConta(idTitular)
+    API->>UC: ConsultarSaldo(idConta, idTitular)
+    UC->>UC: Autorizar por titularidade
+    alt Titular autorizado
+        UC->>REP: Buscar saldo da conta
+        REP-->>UC: Saldo
+        UC-->>API: Retorno de sucesso
+        API-->>Canal: 200 + payload saldo
+    else Não autorizado
+        UC-->>API: Erro de autorização
+        API-->>Canal: 403
+    end
+```
+
 ## Fluxo batch
 1. Arquivo consolidado (~50GB) é disponibilizado no ambiente de arquivos (NFS).
 2. Adaptador de leitura batch representa o ponto de integração com esse arquivo.
 3. Em implementação futura, o conteúdo lido será processado e persistido pelo fluxo de aplicação.
 4. Neste estágio, a estrutura está preparada sem processamento complexo.
+
+### Sequência: fluxo batch consolidado
+
+```mermaid
+sequenceDiagram
+    participant NFS as Arquivo Consolidado (NFS conceitual)
+    participant BAT as Adaptador Batch
+    participant APP as Serviço de Aplicação
+    participant REP as Repositório de Saldo
+
+    NFS->>BAT: Disponibiliza arquivo consolidado
+    BAT->>BAT: Leitura e parsing do arquivo
+    BAT->>APP: Enviar registros normalizados
+    APP->>APP: Regras de processamento
+    APP->>REP: Atualizar saldo consolidado
+    REP-->>APP: Confirma persistência
+```
 
 ## Fluxo de eventos
 1. Atualizações de saldo chegam por mensageria (ex.: MQ em cenário real).
@@ -38,6 +137,33 @@ Camadas:
 5. SNS é o ponto de fanout e consumidores assinam via SQS em cenário real.
 6. Esse desenho desacopla consumidores, permite retries independentes e aumenta resiliência operacional.
 7. Adaptadores locais/AWS mantêm a infraestrutura desacoplada do núcleo de aplicação.
+
+### Sequência: ingestão de evento de saldo
+
+```mermaid
+sequenceDiagram
+    participant MQ as Mensageria de Entrada (MQ conceitual)
+    participant CON as Consumidor de Evento
+    participant APP as Serviço de Processamento
+    participant IDEMP as RepositórioEventoProcessado
+    participant SALDO as RepositórioSaldoConta
+    participant PUB as Publicador Integração (Log/SNS)
+
+    MQ->>CON: EventoSaldoAtualizado
+    CON->>APP: ConsumirEventoSaldoAtualizado
+    APP->>IDEMP: Verificar idempotência/ordenação
+    alt Evento duplicado ou fora de ordem
+        IDEMP-->>APP: Rejeitar processamento
+        APP-->>CON: ACK sem atualização
+    else Evento válido
+        IDEMP-->>APP: Processar
+        APP->>SALDO: Persistir novo saldo
+        SALDO-->>APP: Persistido
+        APP->>PUB: Publicar evento de integração
+        PUB-->>APP: Publicado
+        APP-->>CON: ACK
+    end
+```
 
 
 ## Estratégia de persistência
