@@ -1,0 +1,21 @@
+# Exemplo de profile aws-exemplo para referência.
+# Este arquivo NÃO deve ser usado diretamente em produção.
+spring:
+  config:
+    activate:
+      on-profile: aws-exemplo
+
+saldo:
+  persistencia:
+    aws:
+      dynamodb:
+        # Nome da tabela de saldo consolidado no DynamoDB.
+        tabela-saldo-consolidado: ${SALDO_DYNAMODB_TABELA_SALDO_CONSOLIDADO:saldo_consolidado}
+        # Região AWS da tabela (ex.: sa-east-1).
+        regiao: ${AWS_REGION:sa-east-1}
+        # Endpoint opcional (ex.: localstack). Em produção, deixar vazio para usar endpoint padrão AWS.
+        endpoint: ${SALDO_DYNAMODB_ENDPOINT:}
+
+# Credenciais AWS NÃO devem ficar em arquivo versionado.
+# Em ambiente real, usar IAM Role (preferencial), secret manager ou variáveis de ambiente:
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN.

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="PADRAO_LOG_ESTRUTURADO"
+              value='{"timestamp":"%d{yyyy-MM-dd_HH:mm:ss.SSS}","nivel":"%level","aplicacao":"${spring.application.name:-api-saldo-cliente}","thread":"%thread","logger":"%logger{36}","correlationId":"%X{correlationId:-nao-informado}","mensagem":"%msg","excecao":"%ex{full}"}%n'/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${PADRAO_LOG_ESTRUTURADO}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
