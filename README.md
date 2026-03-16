@@ -18,11 +18,18 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 - `infraestrutura`: adaptadores técnicos (HTTP, batch, mensageria, persistência).
 - `compartilhado`: componentes transversais (ex.: tratamento global de erro).
 
+## Separação explícita entre API e Batch
+- **API (consulta online/autorização de titularidade):** atende requisições síncronas de saldo, valida identidade via JWT e aplica autorização de titularidade no caso de uso.
+- **Batch (carga massiva consolidada e reconciliação):** processa cargas de grande volume e prepara reconciliação de dados sem bloquear o fluxo online.
+- **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
+
 ## Justificativa para classes em português
 Para este desafio técnico, classes, métodos e pacotes foram nomeados em português como escolha simbólica e para manter consistência com o enunciado.
 
 ## Observação sobre convenção real de mercado
 Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
+
+> Convenção explícita deste repositório: **português neste desafio; inglês preferível em projeto real**.
 
 ## Segurança nesta fase
 - A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.

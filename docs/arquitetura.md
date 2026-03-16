@@ -9,6 +9,12 @@ Camadas:
 - **Infraestrutura**: adaptadores de entrada e saída (HTTP, leitura batch, publicação de eventos, repositório).
 - **Compartilhado**: tratamento global de erro e objetos transversais.
 
+
+## Separação explícita entre API e Batch
+- **API (consulta online/autorização de titularidade):** fluxo síncrono orientado a baixa latência para consulta de saldo, com autenticação JWT e autorização por titularidade aplicada no caso de uso.
+- **Batch (carga massiva consolidada e reconciliação):** fluxo assíncrono para ingestão de massa e reconciliação periódica, preparado para processar grandes volumes sem impacto direto na experiência online.
+- **Domínio compartilhado, responsabilidades diferentes:** ambos os fluxos usam o mesmo domínio e portas de aplicação, porém com objetivos operacionais distintos e ciclos de execução diferentes.
+
 ## Fluxo da API
 1. Cliente envia requisição ao endpoint de saldo com `Authorization: Bearer <token JWT>`.
 2. Camada de segurança valida o token JWT via Spring Security OAuth2 Resource Server.
@@ -37,3 +43,6 @@ Camadas:
 - Também no local, há persistência de **eventos processados** para suportar deduplicação/idempotência em evoluções de consumo de fila.
 - No **profile aws**, existe um adaptador esqueleto para DynamoDB com configuração dedicada (tabela, região, endpoint e credenciais via IAM role/secrets/variáveis de ambiente).
 - A integração real com AWS está fora do escopo deste teste técnico, mas a estrutura foi deixada pronta para evolução segura.
+
+
+> Convenção de linguagem adotada: **português neste desafio**; em projeto real, a preferência é por nomenclatura técnica em **inglês**.
