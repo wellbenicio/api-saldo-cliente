@@ -1,7 +1,7 @@
 # Decisões Técnicas
 
 ## Premissas do desafio
-A solução foi desenhada para representar um serviço de saldo robusto e evolutivo, sem integração real com serviços externos neste primeiro momento.
+A solução foi desenhada para representar um serviço central de saldo robusto e evolutivo, sem integração real com serviços externos neste primeiro momento.
 
 ## O que foi mantido
 - Java 21 + Spring Boot como base tecnológica.
@@ -29,6 +29,7 @@ Esse refinamento é tratado como **amadurecimento técnico da solução**, e nã
 ## Escopo de evolução
 A integração real com NFS/AWS permanece fora do escopo deste teste técnico, mantendo apenas contratos e adaptadores preparados para evolução.
 
-## Referências consolidadas
-- Convenção linguística: `docs/adr/ADR-002-nomes-em-portugues.md`.
-- Estratégia de autenticação JWT (remoção de legado): `docs/adr/ADR-008-remocao-jwt-legado.md`.
+## Situação atual validada
+- A suíte de testes (`./mvnw test`) executa localmente com sucesso.
+- O profile `local` não depende de AWS, MQ ou NFS reais para subir os componentes centrais.
+- A autenticação JWT continua obrigatória para os endpoints de negócio, mas usa decoder HS256 local com segredo configurável em propriedade (`seguranca.jwt.segredo-assinatura`), sem dependência de IdP externo neste repositório.
