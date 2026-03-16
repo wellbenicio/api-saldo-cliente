@@ -29,3 +29,8 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 - O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` a partir dos claims (`idTitular`, `titular_id` ou `sub`).
 - A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta.
 - Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
+
+
+## Estratégia de testes
+- **Teste unitário (aplicação/domínio):** valida a regra do caso de uso `ServicoConsultaSaldoConta` de forma isolada, com mock/stub da porta de saída (`RepositorioSaldoContaPortaSaida`) para garantir cenários de titular autorizado, titular não autorizado e conta inexistente.
+- **Teste de integração (HTTP + segurança):** valida a cadeia completa da API no endpoint `/v1/contas/{idConta}/saldo`, incluindo autenticação/autorização e contratos HTTP (status 200/403/401), além do payload de erro retornado pela camada web/security.
