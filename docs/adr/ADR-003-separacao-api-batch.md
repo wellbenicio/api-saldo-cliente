@@ -10,12 +10,13 @@ O serviço de saldo atende dois tipos de necessidade com características operac
 
 Sem uma separação explícita, há risco de acoplamento indevido entre requisitos de tempo real e requisitos de throughput, dificultando evolução, operação e observabilidade.
 
-## Motivação
-- Tornar explícitos os limites de responsabilidade entre o fluxo transacional online e o fluxo de processamento em lote.
-- Preservar um domínio compartilhado, evitando duplicação de regras de negócio.
-- Permitir evolução e operação independentes para API e batch (escalabilidade, janelas de execução, tratamento de falhas).
+## Decisão
+Adotar separação explícita entre:
+- **API:** consulta online de saldo e autorização de titularidade;
+- **Batch:** carga massiva consolidada e reconciliação;
+- **Domínio compartilhado:** regras centrais comuns, com responsabilidades operacionais distintas em cada fluxo.
 
-## Alternativas avaliadas
+## Alternativas
 1. **Fluxo único para API e batch**
    - Prós: menor número inicial de componentes e documentação simplificada.
    - Contras: mistura de responsabilidades, maior risco operacional e menor clareza arquitetural.
@@ -26,13 +27,7 @@ Sem uma separação explícita, há risco de acoplamento indevido entre requisit
 
 3. **Separação de responsabilidades com domínio compartilhado (escolhida)**
    - Prós: clareza de fronteiras operacionais com reaproveitamento das regras centrais.
-   - Contras: exige disciplina de arquitetura para manter contratos estáveis entre fluxos.
-
-## Decisão
-Adotar separação explícita entre:
-- **API:** consulta online de saldo e autorização de titularidade;
-- **Batch:** carga massiva consolidada e reconciliação;
-- **Domínio compartilhado:** regras centrais comuns, com responsabilidades operacionais distintas em cada fluxo.
+   - Contras: exige disciplina para manter contratos estáveis entre fluxos.
 
 ## Consequências
 ### Positivas
@@ -40,9 +35,10 @@ Adotar separação explícita entre:
 - Evolução mais segura de desempenho/escala por tipo de fluxo.
 - Melhor alinhamento com arquitetura hexagonal e com as ADRs existentes.
 
-### Negativas
+### Trade-offs
 - Incremento de esforço documental e de governança arquitetural.
 - Necessidade de garantir consistência entre processos online e em lote ao evoluir regras.
 
-## Observação de escopo deste teste
-Neste teste técnico, **não há integração real com NFS/AWS**. Os pontos de integração permanecem representados por contratos/adaptadores para evolução futura.
+## Limitações de escopo do desafio
+- Neste teste técnico, não há integração real com NFS/AWS.
+- Os pontos de integração permanecem representados por contratos/adaptadores para evolução futura.
