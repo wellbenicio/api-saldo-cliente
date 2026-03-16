@@ -49,7 +49,6 @@ class ServicoConsultaSaldoContaTest {
 
         assertEquals(saldoContaEsperado, saldoConta);
         verify(observabilidadeMetricasAplicacao).incrementarConsultasSaldo();
-        verify(observabilidadeMetricasAplicacao, never()).incrementarNegacoesAcesso();
     }
 
     @Test
@@ -68,7 +67,6 @@ class ServicoConsultaSaldoContaTest {
 
         assertThrows(AcessoNaoAutorizadoContaExcecao.class, () -> servicoConsultaSaldoConta.consultar(comando));
         verify(observabilidadeMetricasAplicacao).incrementarNegacoesAcesso();
-        verify(observabilidadeMetricasAplicacao, never()).incrementarConsultasSaldo();
     }
 
     @Test

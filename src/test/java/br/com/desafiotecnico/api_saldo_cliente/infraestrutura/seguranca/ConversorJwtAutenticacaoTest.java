@@ -35,6 +35,22 @@ class ConversorJwtAutenticacaoTest {
         assertTrue(principalConta.perfisOuScopes().containsAll(Set.of("SCOPE_saldo:read", "SCOPE_conta:consulta", "saldo:read", "conta:consulta")));
     }
 
+
+    @Test
+    void deveAceitarClaimPerfisOuScopesComoFonteDeAutorizacao() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900",
+                "perfisOuScopes", "saldo:read conta:consulta"
+        ));
+
+        JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
+        PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
+
+        assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
+        assertTrue(principalConta.perfisOuScopes().contains("conta:consulta"));
+    }
+
     @Test
     void deveUsarFallbacksParaClaimsAlternativos() {
         Jwt jwt = criarJwt(Map.of(
