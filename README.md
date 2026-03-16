@@ -47,3 +47,23 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 - **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
 
 > Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
+
+## Consumo de eventos de saldo atualizado (quase em tempo real)
+
+Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
+
+Fluxo arquitetural:
+1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
+2. O adaptador chama a porta de entrada `ConsumirEventoSaldoAtualizadoPortaEntrada`.
+3. `ServicoProcessamentoEventoSaldoAtualizado` aplica regras de negócio:
+   - idempotência por `idEvento`;
+   - ignorar evento duplicado;
+   - ignorar evento fora de ordem (desatualizado) para não sobrescrever saldo mais novo.
+4. Persistência é feita via `RepositorioSaldoContaPortaSaida`.
+5. Registro de evento processado via `RepositorioEventoProcessadoPortaSaida`.
+
+> Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
+
+### Convenção de nomes
+Neste desafio, classes/pacotes estão em português por escolha simbólica.
+Em projeto real de mercado, a convenção preferível continua sendo nomes em inglês.

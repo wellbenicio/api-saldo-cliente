@@ -17,7 +17,9 @@ public class ProcessadorRegistroSaldoBatch implements ItemProcessor<RegistroArqu
             new Conta(item.idConta(), item.idTitular()),
             new BigDecimal(item.valor()),
             item.moeda(),
-            OffsetDateTime.parse(item.atualizadoEm())
+            OffsetDateTime.parse(item.atualizadoEm()),
+            OffsetDateTime.parse(item.atualizadoEm()),
+            null
         );
     }
 }
