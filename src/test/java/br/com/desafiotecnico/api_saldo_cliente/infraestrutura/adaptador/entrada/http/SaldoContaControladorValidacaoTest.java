@@ -50,7 +50,9 @@ class SaldoContaControladorValidacaoTest {
                 new Conta("12345", "titular-001"),
                 new BigDecimal("100.00"),
                 "BRL",
-                atualizadoEm
+                atualizadoEm,
+                atualizadoEm,
+                null
         );
 
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))

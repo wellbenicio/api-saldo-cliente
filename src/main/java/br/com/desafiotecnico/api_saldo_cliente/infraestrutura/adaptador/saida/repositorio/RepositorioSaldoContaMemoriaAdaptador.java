@@ -17,7 +17,8 @@ public class RepositorioSaldoContaMemoriaAdaptador implements RepositorioSaldoCo
 
     public RepositorioSaldoContaMemoriaAdaptador() {
         Conta contaExemplo = new Conta("12345", "titular-001");
-        saldos.put(contaExemplo.idConta(), new SaldoConta(contaExemplo, new BigDecimal("1500.00"), "BRL", OffsetDateTime.now()));
+        OffsetDateTime referenciaInicial = OffsetDateTime.now();
+        saldos.put(contaExemplo.idConta(), new SaldoConta(contaExemplo, new BigDecimal("1500.00"), "BRL", OffsetDateTime.now(), referenciaInicial, null));
     }
 
     @Override
@@ -27,7 +28,11 @@ public class RepositorioSaldoContaMemoriaAdaptador implements RepositorioSaldoCo
 
     @Override
     public SaldoConta salvar(SaldoConta saldoConta) {
-        saldos.put(saldoConta.conta().idConta(), saldoConta);
-        return saldoConta;
+        return saldos.compute(saldoConta.conta().idConta(), (idConta, saldoExistente) -> {
+            if (saldoConta.deveSobrescrever(saldoExistente)) {
+                return saldoConta;
+            }
+            return saldoExistente;
+        });
     }
 }
