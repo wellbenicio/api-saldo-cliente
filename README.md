@@ -63,6 +63,53 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 - **Profile AWS de exemplo (conceitual):**
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
+## Como consumir a API
+
+### Endpoint principal
+- `GET /v1/contas/{idConta}/saldo`
+
+### Exemplo de requisição com JWT Bearer
+```bash
+curl -X GET "http://localhost:8080/v1/contas/12345/saldo" \
+  -H "Authorization: Bearer <seu-jwt-aqui>" \
+  -H "Accept: application/json"
+```
+
+### Exemplos resumidos de resposta
+
+**200 OK**
+```json
+{
+  "idConta": "12345",
+  "saldo": 1500.75,
+  "moeda": "BRL",
+  "atualizadoEm": "2025-01-10T14:30:00Z"
+}
+```
+
+**401 Unauthorized**
+```json
+{
+  "status": 401,
+  "erro": "nao_autenticado",
+  "mensagem": "Token ausente, inválido ou expirado"
+}
+```
+
+**403 Forbidden**
+```json
+{
+  "status": 403,
+  "erro": "acesso_negado",
+  "mensagem": "Usuário autenticado sem permissão para consultar a conta informada"
+}
+```
+
+### Observação rápida sobre claims JWT esperadas
+- A conversão do JWT para o principal autenticado está em `infraestrutura.seguranca.ConversorJwtAutenticacao`.
+- Em resumo, a API espera um identificador de cliente (`idCliente` ou `sub`) e documento (`documento`, `cpf` ou `cnpj`), além de perfis/scopes (`perfisOuScopes`, `scope` ou `scp`) para compor authorities.
+- Para contexto arquitetural e decisões de segurança, consulte os ADRs em `docs/adr/`, especialmente `ADR-006-seguranca-acesso-saldo-autenticacao-autorizacao.md` e `ADR-008-remocao-jwt-legado.md`.
+
 ## Consumo de eventos de saldo atualizado (quase em tempo real)
 
 Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
