@@ -1,6 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.aplicacao.servico;
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsumirEventoSaldoAtualizadoComando;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.PublicadorEventoIntegracaoSaldoPortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.RepositorioEventoProcessadoPortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.RepositorioSaldoContaPortaSaida;
@@ -21,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 
 class ServicoProcessamentoEventoSaldoAtualizadoTest {
@@ -28,11 +30,13 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida = mock(RepositorioEventoProcessadoPortaSaida.class);
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida = mock(PublicadorEventoIntegracaoSaldoPortaSaida.class);
+    private final ObservabilidadePortaSaida observabilidadePortaSaida = mock(ObservabilidadePortaSaida.class);
 
     private final ServicoProcessamentoEventoSaldoAtualizado servico = new ServicoProcessamentoEventoSaldoAtualizado(
             repositorioSaldoContaPortaSaida,
             repositorioEventoProcessadoPortaSaida,
-            publicadorEventoIntegracaoSaldoPortaSaida
+            publicadorEventoIntegracaoSaldoPortaSaida,
+            observabilidadePortaSaida
     );
 
     @Test
@@ -107,4 +111,21 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
         verify(publicadorEventoIntegracaoSaldoPortaSaida, never()).publicar(any(EventoIntegracaoSaldoAtualizado.class));
         assertEquals(new BigDecimal("500.00"), saldoAtual.valor());
     }
+
+    @Test
+    void deveIncrementarMetricaQuandoOcorrerFalhaNoProcessamentoEvento() {
+        ConsumirEventoSaldoAtualizadoComando comando = new ConsumirEventoSaldoAtualizadoComando(
+                "evt-falha", "conta-123", "titular-001", new BigDecimal("100.00"),
+                OffsetDateTime.parse("2026-03-10T10:15:30Z"), 11L, "MQ_JMS_SIMULADO"
+        );
+
+        when(repositorioEventoProcessadoPortaSaida.jaProcessado("evt-falha")).thenReturn(false);
+        when(repositorioSaldoContaPortaSaida.buscarPorIdConta("conta-123")).thenReturn(Optional.empty());
+        when(repositorioSaldoContaPortaSaida.salvar(any(SaldoConta.class))).thenThrow(new RuntimeException("erro"));
+
+        org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> servico.consumir(comando));
+
+        verify(observabilidadePortaSaida, times(1)).incrementarFalhasProcessamentoEvento();
+    }
+
 }
