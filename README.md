@@ -1,5 +1,30 @@
 # API Saldo Cliente
 
+## Quickstart
+
+### 1) Pré-requisitos
+- Java 21 instalado.
+- Maven Wrapper disponível no projeto (`./mvnw`).
+- Portas usadas localmente:
+  - `8080`: API HTTP.
+
+### 2) Bootstrap local
+1. **Build do projeto**
+   - `./mvnw clean install`
+2. **Execução da API em profile local**
+   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+   - (alternativa default já suportada) `./mvnw spring-boot:run`
+3. **Execução de testes**
+   - `./mvnw test`
+
+### 3) Critério de sucesso esperado
+- Aplicação sobe sem erros e o healthcheck responde em `http://localhost:8080/actuator/health`.
+
+### 4) Próximos passos (seções avançadas)
+- Batch: seção [Fluxo batch oficial](#fluxo-batch-oficial).
+- AWS exemplo: seções [Persistência por profile](#persistência-por-profile) e [Infraestrutura (esqueleto Terraform)](#infraestrutura-esqueleto-terraform).
+- ADRs: seção [Decisões arquiteturais consolidadas](#decisões-arquiteturais-consolidadas) e diretório `docs/adr/`.
+
 ## Objetivo do projeto
 Este projeto representa uma API backend em Java 21 com Spring Boot para consulta de saldo de conta por canais bancários, com foco em qualidade técnica, arquitetura e clareza de evolução para ambiente corporativo.
 
@@ -53,14 +78,18 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 > Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
 
 ## Comandos de execução
-- **API local (default):**
-  - `./mvnw spring-boot:run`
-  - ou `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+- **Build do projeto:**
+  - `./mvnw clean install`
+- **API local (default / onboarding):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+  - ou `./mvnw spring-boot:run`
+- **Testes:**
+  - `./mvnw test`
 - **Batch com persistência local (recomendado no repositório):**
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
-- **Batch com caminho de arquivo customizado:**
+- Batch com arquivo customizado:
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.diretorio-entrada=/tmp --saldo.batch.nome-arquivo=saldos.csv --saldo.batch.delimitador=|"`
-- **Profile AWS de exemplo (conceitual):**
+- Profile AWS de exemplo:
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
 ## Como consumir a API
