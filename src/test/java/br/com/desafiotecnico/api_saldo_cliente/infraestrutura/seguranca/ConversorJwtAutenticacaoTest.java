@@ -7,28 +7,77 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConversorJwtAutenticacaoTest {
 
     private final ConversorJwtAutenticacao conversorJwtAutenticacao = new ConversorJwtAutenticacao();
 
     @Test
-    void deveConverterJwtParaPrincipalContaUsandoClaimSub() {
-        Jwt jwt = criarJwt(Map.of("sub", "titular-001"));
+    void deveConverterJwtParaPrincipalContaUsandoClaimsPadrao() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900",
+                "scope", "saldo:read conta:consulta"
+        ));
 
         JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
 
         PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
-        assertEquals("titular-001", principalConta.idTitular());
+        assertEquals("cliente-001", principalConta.idCliente());
+        assertEquals("12345678900", principalConta.documento());
+        assertEquals("cliente-001", principalConta.getName());
+        assertTrue(principalConta.perfisOuScopes().containsAll(Set.of("SCOPE_saldo:read", "SCOPE_conta:consulta", "saldo:read", "conta:consulta")));
     }
 
     @Test
-    void deveFalharQuandoJwtNaoContiverClaimIdentificacaoDoTitular() {
-        Jwt jwt = criarJwt(Map.of("scope", "saldo:read"));
+    void deveUsarFallbacksParaClaimsAlternativos() {
+        Jwt jwt = criarJwt(Map.of(
+                "sub", "cliente-sub-001",
+                "cpf", "98765432100",
+                "scp", "saldo:read"
+        ));
+
+        JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
+        PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
+
+        assertEquals("cliente-sub-001", principalConta.idCliente());
+        assertEquals("98765432100", principalConta.documento());
+        assertTrue(principalConta.perfisOuScopes().contains("SCOPE_saldo:read"));
+        assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
+    }
+
+    @Test
+    void deveFalharQuandoJwtNaoContiverClaimObrigatoriaIdCliente() {
+        Jwt jwt = criarJwt(Map.of(
+                "documento", "12345678900",
+                "scope", "saldo:read"
+        ));
+
+        assertThrows(JwtException.class, () -> conversorJwtAutenticacao.convert(jwt));
+    }
+
+    @Test
+    void deveFalharQuandoJwtNaoContiverClaimObrigatoriaDocumento() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "scope", "saldo:read"
+        ));
+
+        assertThrows(JwtException.class, () -> conversorJwtAutenticacao.convert(jwt));
+    }
+
+    @Test
+    void deveFalharQuandoJwtNaoContiverClaimObrigatoriaPerfisOuScopes() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900"
+        ));
 
         assertThrows(JwtException.class, () -> conversorJwtAutenticacao.convert(jwt));
     }
