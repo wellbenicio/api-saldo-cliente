@@ -74,7 +74,7 @@ class SaldoContaControladorSegurancaIntegracaoTest {
         return Jwts.builder()
                 .subject(sujeito)
                 .claim("documento", documento)
-                .claim("escopo", escopo)
+                .claim("scope", escopo)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
                 .signWith(chave)
