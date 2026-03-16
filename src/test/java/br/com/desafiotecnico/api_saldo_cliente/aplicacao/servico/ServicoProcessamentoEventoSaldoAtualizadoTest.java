@@ -7,6 +7,7 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.EventoIntegracaoSaldoAtualizado;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -28,11 +29,13 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida = mock(RepositorioEventoProcessadoPortaSaida.class);
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida = mock(PublicadorEventoIntegracaoSaldoPortaSaida.class);
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
 
     private final ServicoProcessamentoEventoSaldoAtualizado servico = new ServicoProcessamentoEventoSaldoAtualizado(
             repositorioSaldoContaPortaSaida,
             repositorioEventoProcessadoPortaSaida,
-            publicadorEventoIntegracaoSaldoPortaSaida
+            publicadorEventoIntegracaoSaldoPortaSaida,
+            observabilidadeMetricasAplicacao
     );
 
     @Test
@@ -63,6 +66,7 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
         assertEquals("BRL", evento.moeda());
         assertEquals(10L, evento.versaoSaldo());
         assertEquals("MQ_JMS_SIMULADO", evento.origemAtualizacao());
+        verify(observabilidadeMetricasAplicacao, never()).incrementarFalhasProcessamentoEvento();
     }
 
     @Test
@@ -79,6 +83,7 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
         verify(repositorioSaldoContaPortaSaida, never()).salvar(any(SaldoConta.class));
         verify(repositorioEventoProcessadoPortaSaida, never()).registrarProcessamento(any(), any());
         verify(publicadorEventoIntegracaoSaldoPortaSaida, never()).publicar(any(EventoIntegracaoSaldoAtualizado.class));
+        verify(observabilidadeMetricasAplicacao, never()).incrementarFalhasProcessamentoEvento();
     }
 
     @Test
@@ -106,5 +111,25 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
         verify(repositorioEventoProcessadoPortaSaida).registrarProcessamento(eq("evt-antigo"), eq("MQ_JMS_SIMULADO"));
         verify(publicadorEventoIntegracaoSaldoPortaSaida, never()).publicar(any(EventoIntegracaoSaldoAtualizado.class));
         assertEquals(new BigDecimal("500.00"), saldoAtual.valor());
+        verify(observabilidadeMetricasAplicacao, never()).incrementarFalhasProcessamentoEvento();
     }
+    @Test
+    void deveIncrementarMetricaQuandoFalharNoProcessamentoDoEvento() {
+        ConsumirEventoSaldoAtualizadoComando comando = new ConsumirEventoSaldoAtualizadoComando(
+                "evt-falha", "conta-123", "titular-001", new BigDecimal("2500.10"),
+                OffsetDateTime.parse("2026-03-10T10:15:30Z"), 10L, "MQ_JMS_SIMULADO"
+        );
+
+        when(repositorioEventoProcessadoPortaSaida.jaProcessado("evt-falha")).thenReturn(false);
+        when(repositorioSaldoContaPortaSaida.buscarPorIdConta("conta-123")).thenReturn(Optional.empty());
+        when(repositorioSaldoContaPortaSaida.salvar(any(SaldoConta.class))).thenThrow(new RuntimeException("erro ao salvar"));
+
+        RuntimeException excecao = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, () -> servico.consumir(comando));
+
+        assertEquals("erro ao salvar", excecao.getMessage());
+        verify(observabilidadeMetricasAplicacao).incrementarFalhasProcessamentoEvento();
+        verify(repositorioEventoProcessadoPortaSaida, never()).registrarProcessamento("evt-falha", "MQ_JMS_SIMULADO");
+        verify(publicadorEventoIntegracaoSaldoPortaSaida, never()).publicar(any(EventoIntegracaoSaldoAtualizado.class));
+    }
+
 }

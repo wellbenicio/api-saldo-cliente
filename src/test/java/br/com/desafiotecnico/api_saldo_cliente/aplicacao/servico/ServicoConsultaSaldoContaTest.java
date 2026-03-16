@@ -6,6 +6,7 @@ import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutoriza
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -14,13 +15,19 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ServicoConsultaSaldoContaTest {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
-    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida);
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
+    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(
+            repositorioSaldoContaPortaSaida,
+            observabilidadeMetricasAplicacao
+    );
 
     @Test
     void deveRetornarSaldoQuandoTitularSolicitanteForDonoDaConta() {
@@ -39,6 +46,8 @@ class ServicoConsultaSaldoContaTest {
         SaldoConta saldoConta = servicoConsultaSaldoConta.consultar(comando);
 
         assertEquals(saldoContaEsperado, saldoConta);
+        verify(observabilidadeMetricasAplicacao).incrementarConsultasSaldo();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarNegacoesAcesso();
     }
 
     @Test
@@ -56,6 +65,8 @@ class ServicoConsultaSaldoContaTest {
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("12345")).thenReturn(Optional.of(saldoConta));
 
         assertThrows(AcessoNaoAutorizadoContaExcecao.class, () -> servicoConsultaSaldoConta.consultar(comando));
+        verify(observabilidadeMetricasAplicacao).incrementarNegacoesAcesso();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarConsultasSaldo();
     }
 
     @Test
@@ -65,5 +76,7 @@ class ServicoConsultaSaldoContaTest {
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("conta-inexistente")).thenReturn(Optional.empty());
 
         assertThrows(ContaNaoEncontradaExcecao.class, () -> servicoConsultaSaldoConta.consultar(comando));
+        verify(observabilidadeMetricasAplicacao, never()).incrementarConsultasSaldo();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarNegacoesAcesso();
     }
 }
