@@ -28,7 +28,7 @@ public class ConfiguracaoSeguranca {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health", "/actuator/info", "/actuator/metrics", "/actuator/metrics/**").permitAll()
                         .requestMatchers("/v1/contas/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(manipuladorAutenticacaoNaoAutenticado)

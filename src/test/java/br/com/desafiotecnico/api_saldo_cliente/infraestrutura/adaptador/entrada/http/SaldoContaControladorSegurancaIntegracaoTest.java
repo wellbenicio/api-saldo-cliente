@@ -82,6 +82,17 @@ class SaldoContaControladorSegurancaIntegracaoTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void deveNegarEndpointsNaoMapeadosNaPoliticaDeSeguranca() throws Exception {
+        mockMvc.perform(get("/rota-inexistente"))
+                .andExpect(status().isUnauthorized());
+
+        String token = gerarToken("titular-001", "12345678900", "conta:saldo:consultar");
+        mockMvc.perform(get("/rota-inexistente")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
     private String gerarToken(String sujeito, String documento, String scope) {
         Instant agora = Instant.now();
         SecretKey chave = Keys.hmacShaKeyFor(SEGREDO.getBytes(StandardCharsets.UTF_8));

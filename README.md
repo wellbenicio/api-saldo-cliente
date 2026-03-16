@@ -2,6 +2,9 @@
 
 API backend em **Java 21 + Spring Boot** para consulta de saldo por conta, com foco em arquitetura hexagonal, segurança por JWT, processamento batch e observabilidade.
 
+> Convenção deste desafio: classes, métodos e pacotes em português como escolha simbólica de avaliação.
+> Em um projeto corporativo real, a convenção recomendada seria nomenclatura em inglês.
+
 ## Sumário
 - [Visão geral](#visão-geral)
 - [Arquitetura](#arquitetura)
@@ -168,8 +171,6 @@ A autorização de negócio (titularidade) ocorre no caso de uso: o `idTitular` 
 - Decisões técnicas: `docs/decisoes-tecnicas.md`
 - Observabilidade: `docs/observabilidade.md`
 - Operação batch: `docs/operacao-batch.md`
-- ADRs: `docs/adr/`
-  - destaque para `ADR-006` (segurança) e `ADR-008` (remoção de JWT legado)
 
 ## Infraestrutura (Terraform)
 Em `infra/terraform/` há um esqueleto comentado para referência conceitual (SNS, alarmes CloudWatch, variáveis/outputs), sem provisionamento real neste desafio.
