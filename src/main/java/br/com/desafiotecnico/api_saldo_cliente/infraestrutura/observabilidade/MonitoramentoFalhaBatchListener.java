@@ -24,7 +24,7 @@ public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         if (stepExecution.getFailureExceptions() != null && !stepExecution.getFailureExceptions().isEmpty()) {
-            observabilidadePortaSaida.incrementarFalhasBatch();
+            observabilidadeMetricasAplicacao.incrementarFalhasBatch();
             LOGGER.error("Falha no processamento batch. step={}, totalFalhasStep={}",
                     stepExecution.getStepName(),
                     stepExecution.getFailureExceptions().size());
