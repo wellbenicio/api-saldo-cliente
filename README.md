@@ -92,10 +92,119 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 - Profile AWS de exemplo:
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
-## 3) Aprofundamento
-Para visão detalhada de arquitetura, decisões técnicas e material de suporte:
-- Arquitetura: `docs/arquitetura.md`
-- Decisões técnicas: `docs/decisoes-tecnicas.md`
-- ADRs: `docs/adr/`
-- Observabilidade: `docs/observabilidade.md`
-- Operação batch detalhada: `docs/operacao-batch.md`
+## Como consumir a API
+
+### Endpoint principal
+- `GET /v1/contas/{idConta}/saldo`
+
+### Exemplo de requisição com JWT Bearer
+```bash
+curl -X GET "http://localhost:8080/v1/contas/12345/saldo" \
+  -H "Authorization: Bearer <seu-jwt-aqui>" \
+  -H "Accept: application/json"
+```
+
+### Exemplos resumidos de resposta
+
+**200 OK**
+```json
+{
+  "idConta": "12345",
+  "saldo": 1500.75,
+  "moeda": "BRL",
+  "atualizadoEm": "2025-01-10T14:30:00Z"
+}
+```
+
+**401 Unauthorized**
+```json
+{
+  "status": 401,
+  "erro": "nao_autenticado",
+  "mensagem": "Token ausente, inválido ou expirado"
+}
+```
+
+**403 Forbidden**
+```json
+{
+  "status": 403,
+  "erro": "acesso_negado",
+  "mensagem": "Usuário autenticado sem permissão para consultar a conta informada"
+}
+```
+
+### Observação rápida sobre claims JWT esperadas
+- A conversão do JWT para o principal autenticado está em `infraestrutura.seguranca.ConversorJwtAutenticacao`.
+- Em resumo, a API espera um identificador de cliente (`idCliente` ou `sub`) e documento (`documento`, `cpf` ou `cnpj`), além de perfis/scopes (`perfisOuScopes`, `scope` ou `scp`) para compor authorities.
+- Para contexto arquitetural e decisões de segurança, consulte os ADRs em `docs/adr/`, especialmente `ADR-006-seguranca-acesso-saldo-autenticacao-autorizacao.md` e `ADR-008-remocao-jwt-legado.md`.
+
+## Consumo de eventos de saldo atualizado (quase em tempo real)
+
+Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
+
+## Fluxo batch oficial
+
+O fluxo batch oficial desta base está centralizado no pacote `infraestrutura.batch`:
+
+1. `ConfiguracaoImportacaoSaldoBatch` define o `Job` e o `Step` de importação.
+2. `LeitorRegistroArquivoSaldoBatch` cria `FlatFileItemReader` para ler CSV/arquivo delimitado.
+3. `ProcessadorRegistroSaldoBatch` converte o registro bruto para `SaldoConta` de domínio.
+4. `EscritorSaldoContaBatch` persiste os saldos pela porta `RepositorioSaldoContaPortaSaida`.
+
+> A trilha legada paralela de reader/processor/modelo batch foi removida para manter um único caminho de execução e testes.
+
+> A configuração de arquivo/delimitador fica centralizada em `PropriedadesBatchSaldo` (`saldo.batch.diretorio-entrada`, `saldo.batch.nome-arquivo`, `saldo.batch.delimitador`).
+
+### Mapeamento de classes batch
+
+- **Ativas (oficiais)**
+  - `infraestrutura.batch.configuracao.ConfiguracaoImportacaoSaldoBatch`
+  - `infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch`
+  - `infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch`
+  - `infraestrutura.batch.componentes.EscritorSaldoContaBatch`
+  - `infraestrutura.batch.componentes.RegistroArquivoSaldoBatch`
+
+- **Legadas (removidas da trilha principal)**
+  - `infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader`
+  - `infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor`
+  - `infraestrutura.batch.modelo.RegistroArquivoSaldoBatch`
+  - `infraestrutura.adaptador.saida.batch.LeitorArquivoBatchSaldoNfsAdaptador`
+
+Fluxo arquitetural:
+1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
+2. O adaptador chama a porta de entrada `ConsumirEventoSaldoAtualizadoPortaEntrada`.
+3. `ServicoProcessamentoEventoSaldoAtualizado` aplica regras de negócio:
+   - idempotência por `idEvento`;
+   - ignorar evento duplicado;
+   - ignorar evento fora de ordem (desatualizado) para não sobrescrever saldo mais novo.
+4. Persistência é feita via `RepositorioSaldoContaPortaSaida`.
+5. Registro de evento processado via `RepositorioEventoProcessadoPortaSaida`.
+
+> Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
+
+## Decisões arquiteturais consolidadas
+- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês. Detalhes em `docs/adr/ADR-002-nomes-em-portugues.md`.
+- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`. Detalhes em `docs/adr/ADR-008-remocao-jwt-legado.md`.
+
+## Observabilidade e operacionalização básica
+A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
+
+- **Spring Actuator** habilitado com `health`, `info` e `metrics`.
+- **Correlation ID** por requisição HTTP (`X-Correlation-Id`) com propagação no MDC.
+- **Logs estruturados** em JSON no console (`logback-spring.xml`).
+- **Métricas de aplicação**:
+  - `saldo_consultas_total`
+  - `saldo_negacoes_acesso_total`
+  - `saldo_falhas_batch_total`
+  - `saldo_falhas_processamento_evento_total`
+
+Consulte documentação detalhada em: `docs/observabilidade.md`.
+
+## Infraestrutura (esqueleto Terraform)
+Foi incluída a pasta `infra/terraform/` com um **esqueleto comentado** para:
+- tópico SNS de alertas;
+- alarmes CloudWatch (ALB 5xx e métrica customizada de falha de evento);
+- variáveis/outputs básicos.
+
+> Como é um desafio técnico, os recursos AWS estão apenas modelados com comentários claros do que seria configurado em ambiente real (IAM, dimensions reais, KMS, endpoints corporativos, estado remoto etc.).
