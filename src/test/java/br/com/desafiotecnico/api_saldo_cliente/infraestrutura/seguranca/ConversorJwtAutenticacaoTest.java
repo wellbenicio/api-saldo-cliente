@@ -35,6 +35,22 @@ class ConversorJwtAutenticacaoTest {
         assertTrue(principalConta.perfisOuScopes().containsAll(Set.of("SCOPE_saldo:read", "SCOPE_conta:consulta", "saldo:read", "conta:consulta")));
     }
 
+
+    @Test
+    void deveAceitarClaimPerfisOuScopesComoFonteDeAutorizacao() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900",
+                "perfisOuScopes", "saldo:read conta:consulta"
+        ));
+
+        JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
+        PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
+
+        assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
+        assertTrue(principalConta.perfisOuScopes().contains("conta:consulta"));
+    }
+
     @Test
     void deveUsarFallbacksParaClaimsAlternativos() {
         Jwt jwt = criarJwt(Map.of(
@@ -49,6 +65,20 @@ class ConversorJwtAutenticacaoTest {
         assertEquals("cliente-sub-001", principalConta.idCliente());
         assertEquals("98765432100", principalConta.documento());
         assertTrue(principalConta.perfisOuScopes().contains("SCOPE_saldo:read"));
+        assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
+    }
+
+    @Test
+    void deveManterRetrocompatibilidadeComClaimEscopo() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900",
+                "escopo", "saldo:read"
+        ));
+
+        JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
+        PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
+
         assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
     }
 
