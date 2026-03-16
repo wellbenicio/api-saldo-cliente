@@ -1,4 +1,4 @@
-# ADR-004 - Publicação assíncrona de eventos de saldo atualizado com SNS fanout
+# ADR-004: Publicação assíncrona de eventos de saldo atualizado com SNS fanout
 
 ## Status
 Aceito
@@ -16,6 +16,19 @@ Neste desafio técnico, não haverá integração real com AWS, mas a arquitetur
   - local (`log estruturado`) para execução sem dependência externa;
   - AWS esqueleto (`SNS`) apenas com documentação e pontos de extensão.
 
+## Alternativas
+1. **Integração síncrona ponto a ponto (HTTP direto)**
+   - Prós: simplicidade inicial para poucos consumidores.
+   - Contras: acoplamento forte, propagação de falhas e baixa escalabilidade organizacional.
+
+2. **Fila única sem fanout**
+   - Prós: menor complexidade inicial.
+   - Contras: acoplamento entre consumidores e competição por mensagens.
+
+3. **Publicação via SNS + SQS por consumidor (escolhida)**
+   - Prós: desacoplamento, isolamento por consumidor e robustez operacional.
+   - Contras: maior governança de contratos de evento e operação de múltiplas filas.
+
 ## Consequências
 ### Positivas
 - Reduz acoplamento entre serviço de saldo e sistemas consumidores.
@@ -27,11 +40,7 @@ Neste desafio técnico, não haverá integração real com AWS, mas a arquitetur
 - Sem padrão Outbox, ainda existe risco de inconsistência entre persistência e publicação em falha parcial.
 - Introduz necessidade futura de governança de esquema de evento e versionamento.
 
-## Evolução recomendada
-Implementar padrão Outbox transacional em etapa futura:
-1. persistir evento em tabela outbox no mesmo commit da atualização de saldo;
-2. processo assíncrono dedicado publica no SNS;
-3. marcar/reconciliar status de publicação com observabilidade e retry.
-
-## Observação sobre nomenclatura
-Neste desafio, nomes estão em português por escolha simbólica. Em projeto real, a preferência é nomenclatura técnica em inglês.
+## Limitações de escopo do desafio
+- Não inclui integração real com SNS/SQS neste repositório.
+- Não contempla implementação completa de Outbox transacional nesta etapa.
+- Observabilidade operacional de mensageria permanece em nível conceitual/documental.
