@@ -47,9 +47,28 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 
 ## Persistência por profile
 - **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
-- **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+- **aws-exemplo** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
 
 > Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
+
+
+## Estratégia explícita de profiles
+- `local`: execução padrão da API com adaptadores JPA/H2 e web app ativo.
+- `batch`: habilita o job batch e desativa camada web (`web-application-type: none`).
+- `aws-exemplo`: ativa apenas os componentes de exemplo para persistência AWS (DynamoDB), sem integração real.
+
+> Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
+
+## Comandos de execução
+- **API local (default):**
+  - `./mvnw spring-boot:run`
+  - ou `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+- **Batch com persistência local (recomendado no repositório):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
+- **Batch com caminho de arquivo customizado:**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
+- **Profile AWS de exemplo (conceitual):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
 ## Consumo de eventos de saldo atualizado (quase em tempo real)
 
