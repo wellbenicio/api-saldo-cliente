@@ -1,91 +1,93 @@
 # API Saldo Cliente
 
-## Objetivo do projeto
-Este projeto representa uma API backend em Java 21 com Spring Boot para consulta de saldo de conta por canais bancários, com foco em qualidade técnica, arquitetura e clareza de evolução para ambiente corporativo.
+## 1. Visão do problema
+Este projeto modela um cenário bancário com ecossistema distribuído e forte dependência de legado:
 
-## Contexto do desafio
-- Ecossistema bancário distribuído, com legado em mainframe.
-- Arquivo batch consolidado de saldos (~50GB) gerado às 2AM e disponibilizado via servidor de arquivos/NFS.
-- Mensagens de atualização de saldo via MQ a cada nova transação.
-- Consulta de saldo permitida somente ao titular da conta.
-- Necessidade de alta disponibilidade, observabilidade e publicação de saldo atualizado para outros sistemas na AWS.
-- Neste repositório, integrações com AWS/MQ/NFS são estruturadas como adaptadores e configurações, sem integração real.
+- Núcleo transacional em **mainframe**.
+- Processo **batch consolidado (~50GB)** gerado diariamente às **2AM**, disponibilizado via servidor de arquivos/NFS.
+- Atualizações incrementais por **eventos MQ por transação**, em quase tempo real.
+- Consulta de saldo com requisito de segurança: acesso permitido somente por **titularidade da conta**.
+- Exigência operacional de **alta disponibilidade** e **observabilidade**, com capacidade de evolução para integração com componentes AWS.
 
-## Visão geral da arquitetura
-A solução adota arquitetura hexagonal (ports and adapters), com separação em:
-- `dominio`: regras e modelos centrais.
-- `aplicacao`: casos de uso e portas de entrada/saída.
-- `infraestrutura`: adaptadores técnicos (HTTP, batch, mensageria, persistência).
-- `compartilhado`: componentes transversais (ex.: tratamento global de erro).
+O objetivo é entregar um serviço de saldo com clareza arquitetural, isolando regras de negócio de detalhes tecnológicos para permitir evolução segura.
 
-## Separação explícita entre API e Batch
-- **API (consulta online/autorização de titularidade):** atende requisições síncronas de saldo, valida identidade via JWT e aplica autorização de titularidade no caso de uso.
-- **Batch (carga massiva consolidada e reconciliação):** processa cargas de grande volume e prepara reconciliação de dados sem bloquear o fluxo online.
-- **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
+## 2. Arquitetura proposta
+A proposta é um **serviço central de saldo** dentro do ecossistema distribuído, mantendo este projeto como uma unidade coesa (sem decompor em múltiplos microsserviços dentro do próprio repositório).
 
-## Justificativa para classes em português
-Para este desafio técnico, classes, métodos e pacotes foram nomeados em português como escolha simbólica e para manter consistência com o enunciado.
+A arquitetura principal é **hexagonal (ports and adapters)**:
 
-## Observação sobre convenção real de mercado
-Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
+- **dominio**: regras e modelos centrais.
+- **aplicacao**: casos de uso e contratos (portas).
+- **infraestrutura**: adaptadores de entrada/saída (HTTP, segurança, batch, mensageria, persistência).
+- **compartilhado**: aspectos transversais.
 
-> Convenção explícita deste repositório: **português neste desafio; inglês preferível em projeto real**.
+Com isso, entradas (API, batch, eventos) e saídas (persistência/publicação) evoluem sem contaminar o núcleo de negócio.
 
-## Segurança nesta fase
-- A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.
-- O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` a partir dos claims (`idTitular`, `titular_id` ou `sub`).
-- A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta.
-- Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
+## 3. Justificativa das escolhas
+- **Por que hexagonal:** reduz acoplamento entre regra de negócio e frameworks/provedores, aumentando testabilidade e substituição de tecnologia.
+- **Por que separar API x batch:** o fluxo online prioriza latência, disponibilidade e autorização por titularidade; o fluxo batch prioriza carga massiva e reconciliação sem bloquear atendimento síncrono.
+- **Por que SNS + SQS no desenho conceitual:** SNS habilita fanout para múltiplos consumidores; SQS adiciona desacoplamento, controle de backpressure e reprocessamento por consumidor.
+- **Por que autenticação separada de autorização:** autenticação comprova identidade (JWT), enquanto autorização aplica a regra de negócio de titularidade; separar responsabilidades evita fragilidade e aumenta clareza de segurança.
 
+## 4. Como rodar localmente
+### Pré-requisitos
+- **Java 21**
+- **Maven Wrapper** (já versionado no projeto, usar `./mvnw`)
 
-## Estratégia de testes
-- **Teste unitário (aplicação/domínio):** valida a regra do caso de uso `ServicoConsultaSaldoConta` de forma isolada, com mock/stub da porta de saída (`RepositorioSaldoContaPortaSaida`) para garantir cenários de titular autorizado, titular não autorizado e conta inexistente.
-- **Teste de integração (HTTP + segurança):** valida a cadeia completa da API no endpoint `/v1/contas/{idConta}/saldo`, incluindo autenticação/autorização e contratos HTTP (status 200/403/401), além do payload de erro retornado pela camada web/security.
+### Subir a API
+```bash
+./mvnw spring-boot:run
+```
 
-## Persistência por profile
-- **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
-- **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+### Profile local
+O projeto inicia com profile local por padrão (`spring.profiles.active=local`).
 
-> Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
+### Endpoints úteis
+- `GET /v1/contas/{idConta}/saldo`
+- `GET /actuator/health`
+- `GET /actuator/info`
+- `GET /actuator/metrics`
 
-## Consumo de eventos de saldo atualizado (quase em tempo real)
+## 5. Como testar
+### Suíte completa
+```bash
+./mvnw test
+```
+Valida o comportamento de domínio, aplicação, web, segurança e componentes de batch/mensageria simulada.
 
-Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
+### Execução por pacote (quando necessário)
+```bash
+./mvnw -Dtest='br.com.desafiotecnico.api_saldo_cliente.aplicacao.servico.*Test' test
+./mvnw -Dtest='br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.*Test' test
+./mvnw -Dtest='br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.*Test' test
+```
+- **aplicacao.servico**: valida casos de uso e decisões de atualização de saldo.
+- **infraestrutura.adaptador.entrada.http**: valida contrato HTTP, validações e segurança na borda da API.
+- **infraestrutura.batch**: valida parsing/processing dos registros de carga batch.
 
-Fluxo arquitetural:
-1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
-2. O adaptador chama a porta de entrada `ConsumirEventoSaldoAtualizadoPortaEntrada`.
-3. `ServicoProcessamentoEventoSaldoAtualizado` aplica regras de negócio:
-   - idempotência por `idEvento`;
-   - ignorar evento duplicado;
-   - ignorar evento fora de ordem (desatualizado) para não sobrescrever saldo mais novo.
-4. Persistência é feita via `RepositorioSaldoContaPortaSaida`.
-5. Registro de evento processado via `RepositorioEventoProcessadoPortaSaida`.
+## 6. Limitações conscientes
+Este repositório **não** faz integração real com:
 
-> Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
+- AWS (SNS/SQS/DynamoDB operacionais)
+- MQ corporativo real
+- NFS corporativo real
+- Provedor JWT corporativo
 
-### Convenção de nomes
-Neste desafio, classes/pacotes estão em português por escolha simbólica.
-Em projeto real de mercado, a convenção preferível continua sendo nomes em inglês.
+Os pontos de extensão existem como portas/adaptadores e configurações preparadas para evolução:
 
-## Observabilidade e operacionalização básica
-A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
+- adaptadores de mensageria/publicação em infraestrutura;
+- profile e configuração de persistência para cenário AWS;
+- configuração de segurança JWT desacoplada da regra de autorização de negócio.
 
-- **Spring Actuator** habilitado com `health`, `info` e `metrics`.
-- **Correlation ID** por requisição HTTP (`X-Correlation-Id`) com propagação no MDC.
-- **Logs estruturados** em JSON no console (`logback-spring.xml`).
-- **Métricas de aplicação**:
-  - `saldo_consultas_total`
-  - `saldo_negacoes_acesso_total`
-  - `saldo_falhas_batch_total`
-  - `saldo_falhas_processamento_evento_total`
+## 7. Evoluções futuras
+- Implementar **outbox transacional** para publicação confiável de eventos.
+- Adicionar **DLQ e estratégia de reprocessamento** para falhas em mensageria.
+- Reforçar **hardening de segurança/JWT** (validações avançadas de token, rotação de chaves, políticas corporativas).
+- Evoluir para **observabilidade avançada** (tracing distribuído, dashboards e alertas operacionais completos).
+- Estruturar **esteira de deploy** com validações automatizadas e promoção entre ambientes.
 
-Consulte documentação detalhada em: `docs/observabilidade.md`.
-
-## Infraestrutura (esqueleto Terraform)
-Foi incluída a pasta `infra/terraform/` com um **esqueleto comentado** para:
-- tópico SNS de alertas;
-- alarmes CloudWatch (ALB 5xx e métrica customizada de falha de evento);
-- variáveis/outputs básicos.
-
-> Como é um desafio técnico, os recursos AWS estão apenas modelados com comentários claros do que seria configurado em ambiente real (IAM, dimensions reais, KMS, endpoints corporativos, estado remoto etc.).
+## 8. Escolhas simbólicas deste projeto de avaliação
+- Classes, métodos e pacotes com nomes em **português** por aderência ao desafio.
+- Em contexto real, preferência por **inglês técnico** para padronização entre times.
+- Ausência de integração real com nuvem por **escopo da avaliação**.
+- Foco em **clareza arquitetural** e **testabilidade**.
