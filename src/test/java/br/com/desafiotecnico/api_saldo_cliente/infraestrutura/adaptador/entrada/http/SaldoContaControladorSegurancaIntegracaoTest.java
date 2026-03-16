@@ -33,8 +33,7 @@ class SaldoContaControladorSegurancaIntegracaoTest {
         String token = gerarToken("titular-001");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .header("X-Id-Titular", "titular-001"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.idConta").value("12345"))
                 .andExpect(jsonPath("$.idClienteTitular").value("titular-001"));
@@ -45,8 +44,7 @@ class SaldoContaControladorSegurancaIntegracaoTest {
         String token = gerarToken("titular-999");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .header("X-Id-Titular", "titular-999"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
     }
@@ -54,12 +52,10 @@ class SaldoContaControladorSegurancaIntegracaoTest {
     @Test
     void deveRetornar401QuandoTokenInvalidoOuAusente() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido")
-                        .header("X-Id-Titular", "titular-001"))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(get("/v1/contas/12345/saldo")
-                        .header("X-Id-Titular", "titular-001"))
+        mockMvc.perform(get("/v1/contas/12345/saldo"))
                 .andExpect(status().isUnauthorized());
     }
 

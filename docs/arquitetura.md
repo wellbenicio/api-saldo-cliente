@@ -11,9 +11,9 @@ Camadas:
 
 ## Fluxo da API
 1. Cliente envia requisição ao endpoint de saldo com `Authorization: Bearer <token JWT>`.
-2. Camada de segurança valida o token JWT no fluxo de autenticação (sem provedor real nesta fase, mas com contrato definido para evolução).
-3. Após validação, o sistema monta o principal `UsuarioAutenticado` com `idCliente`, `documento` e `perfis/scopes`.
-4. Adaptador HTTP encaminha `idConta` e contexto do usuário autenticado para a porta de entrada da aplicação.
+2. Camada de segurança valida o token JWT via Spring Security OAuth2 Resource Server.
+3. Após validação, `ConversorJwtAutenticacao` monta o principal `PrincipalConta` com `idTitular`.
+4. Adaptador HTTP encaminha `idConta` e o `idTitular` autenticado para a porta de entrada da aplicação.
 5. Caso de uso executa a regra de autorização por titularidade, verificando se o usuário autenticado é titular da conta consultada.
 6. Se autorizado, o caso de uso consulta a porta de saída de saldo e devolve resposta de sucesso.
 7. Se não autorizado, a aplicação retorna erro de acesso; demais erros de domínio seguem para o handler global.

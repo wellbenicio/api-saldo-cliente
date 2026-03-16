@@ -4,20 +4,21 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.Consultar
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.http.dto.SaldoContaSaidaDto;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
-import jakarta.validation.constraints.NotBlank;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.PrincipalConta;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import java.security.Principal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.security.Principal;
 
 @Validated
 @RestController
@@ -38,13 +39,9 @@ public class SaldoContaControlador {
             @Size(min = 5, max = 20, message = "Parâmetro 'idConta' deve ter entre 5 e 20 caracteres.")
             String idConta
     ) {
-        UsuarioAutenticado usuarioAutenticado = obterUsuarioAutenticado(principal);
+        String idTitular = extrairIdTitular(principal);
 
-        ConsultarSaldoContaComando comando = new ConsultarSaldoContaComando(
-                idConta,
-                usuarioAutenticado.idCliente()
-        );
-
+        ConsultarSaldoContaComando comando = new ConsultarSaldoContaComando(idConta, idTitular);
         SaldoConta saldoConta = consultarSaldoContaPortaEntrada.consultar(comando);
 
         SaldoContaSaidaDto saidaDto = new SaldoContaSaidaDto(
@@ -58,10 +55,25 @@ public class SaldoContaControlador {
         return ResponseEntity.ok(saidaDto);
     }
 
-    private UsuarioAutenticado obterUsuarioAutenticado(Principal principal) {
-        if (!(principal instanceof UsuarioAutenticado usuarioAutenticado)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
+    private String extrairIdTitular(Principal principal) {
+        if (principal instanceof PrincipalConta principalConta) {
+            return principalConta.idTitular();
         }
-        return usuarioAutenticado;
+
+        if (principal instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            Object claim = jwtAuthenticationToken.getTokenAttributes().get("sub");
+            if (claim instanceof String idTitular && !idTitular.isBlank()) {
+                return idTitular;
+            }
+        }
+
+        if (principal instanceof Jwt jwt) {
+            String idTitular = jwt.getSubject();
+            if (idTitular != null && !idTitular.isBlank()) {
+                return idTitular;
+            }
+        }
+
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
     }
 }

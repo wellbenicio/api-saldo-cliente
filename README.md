@@ -25,7 +25,7 @@ Para este desafio técnico, classes, métodos e pacotes foram nomeados em portug
 Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
 
 ## Segurança nesta fase
-- A API está preparada para autenticação via **JWT Bearer Token**, ainda sem integração com provedor real de identidade nesta etapa.
-- O fluxo de autenticação considera a validação do token e a montagem de um principal de aplicação chamado `UsuarioAutenticado`, contendo `idCliente`, `documento` e `perfis/scopes`.
+- A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.
+- O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` a partir dos claims (`idTitular`, `titular_id` ou `sub`).
 - A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta.
 - Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
