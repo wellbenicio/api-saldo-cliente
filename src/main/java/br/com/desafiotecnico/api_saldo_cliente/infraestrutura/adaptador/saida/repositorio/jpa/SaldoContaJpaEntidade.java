@@ -28,15 +28,23 @@ public class SaldoContaJpaEntidade {
     @Column(name = "atualizado_em", nullable = false)
     private OffsetDateTime atualizadoEm;
 
+    @Column(name = "data_hora_referencia", nullable = false)
+    private OffsetDateTime dataHoraReferencia;
+
+    @Column(name = "versao_saldo")
+    private Long versaoSaldo;
+
     protected SaldoContaJpaEntidade() {
     }
 
-    public SaldoContaJpaEntidade(String idConta, String idTitular, BigDecimal valor, String moeda, OffsetDateTime atualizadoEm) {
+    public SaldoContaJpaEntidade(String idConta, String idTitular, BigDecimal valor, String moeda, OffsetDateTime atualizadoEm, OffsetDateTime dataHoraReferencia, Long versaoSaldo) {
         this.idConta = idConta;
         this.idTitular = idTitular;
         this.valor = valor;
         this.moeda = moeda;
         this.atualizadoEm = atualizadoEm;
+        this.dataHoraReferencia = dataHoraReferencia;
+        this.versaoSaldo = versaoSaldo;
     }
 
     public String getIdConta() {
@@ -57,5 +65,13 @@ public class SaldoContaJpaEntidade {
 
     public OffsetDateTime getAtualizadoEm() {
         return atualizadoEm;
+    }
+
+    public OffsetDateTime getDataHoraReferencia() {
+        return dataHoraReferencia;
+    }
+
+    public Long getVersaoSaldo() {
+        return versaoSaldo;
     }
 }

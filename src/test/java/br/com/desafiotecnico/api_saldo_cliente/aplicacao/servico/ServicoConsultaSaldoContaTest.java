@@ -29,7 +29,9 @@ class ServicoConsultaSaldoContaTest {
                 new Conta("12345", "titular-001"),
                 new BigDecimal("1024.99"),
                 "BRL",
-                OffsetDateTime.parse("2026-01-11T10:15:30Z")
+                OffsetDateTime.parse("2026-01-11T10:15:30Z"),
+                OffsetDateTime.parse("2026-01-11T10:15:30Z"),
+                null
         );
 
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("12345")).thenReturn(Optional.of(saldoContaEsperado));
@@ -46,7 +48,9 @@ class ServicoConsultaSaldoContaTest {
                 new Conta("12345", "titular-001"),
                 new BigDecimal("1024.99"),
                 "BRL",
-                OffsetDateTime.parse("2026-01-11T10:15:30Z")
+                OffsetDateTime.parse("2026-01-11T10:15:30Z"),
+                OffsetDateTime.parse("2026-01-11T10:15:30Z"),
+                null
         );
 
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("12345")).thenReturn(Optional.of(saldoConta));

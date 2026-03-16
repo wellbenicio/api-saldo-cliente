@@ -26,13 +26,25 @@ public class RepositorioSaldoContaJpaAdaptador implements RepositorioSaldoContaP
 
     @Override
     public SaldoConta salvar(SaldoConta saldoConta) {
+        Optional<SaldoConta> saldoExistente = buscarPorIdConta(saldoConta.conta().idConta());
+        if (saldoExistente.isPresent() && !saldoConta.deveSobrescrever(saldoExistente.get())) {
+            return saldoExistente.get();
+        }
+
         SaldoContaJpaEntidade salvo = saldoContaJpaRepositorio.save(paraEntidade(saldoConta));
         return paraDominio(salvo);
     }
 
     private SaldoConta paraDominio(SaldoContaJpaEntidade entidade) {
         Conta conta = new Conta(entidade.getIdConta(), entidade.getIdTitular());
-        return new SaldoConta(conta, entidade.getValor(), entidade.getMoeda(), entidade.getAtualizadoEm());
+        return new SaldoConta(
+                conta,
+                entidade.getValor(),
+                entidade.getMoeda(),
+                entidade.getAtualizadoEm(),
+                entidade.getDataHoraReferencia(),
+                entidade.getVersaoSaldo()
+        );
     }
 
     private SaldoContaJpaEntidade paraEntidade(SaldoConta saldoConta) {
@@ -41,7 +53,9 @@ public class RepositorioSaldoContaJpaAdaptador implements RepositorioSaldoContaP
                 saldoConta.conta().idTitular(),
                 saldoConta.valor(),
                 saldoConta.moeda(),
-                saldoConta.atualizadoEm()
+                saldoConta.atualizadoEm(),
+                saldoConta.dataHoraReferencia(),
+                saldoConta.versaoSaldo()
         );
     }
 }
