@@ -1,7 +1,7 @@
 # Decisões Técnicas
 
 ## Premissas do desafio
-A solução foi desenhada para representar um serviço de saldo robusto e evolutivo, sem integração real com serviços externos neste primeiro momento.
+A solução foi desenhada para representar um serviço central de saldo robusto e evolutivo, sem integração real com serviços externos neste primeiro momento.
 
 ## O que foi mantido
 - Java 21 + Spring Boot como base tecnológica.
