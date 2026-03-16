@@ -46,3 +46,25 @@ Camadas:
 
 
 > Convenção de linguagem adotada: **português neste desafio**; em projeto real, a preferência é por nomenclatura técnica em **inglês**.
+
+## Fluxo de atualização de saldo por mensageria (quase em tempo real)
+
+Além da API síncrona e do batch consolidado, existe um fluxo de ingestão assíncrona para atualização quase em tempo real de saldo:
+
+1. Adaptador de entrada `infraestrutura.adaptador.entrada.mensageria.ConsumidorSaldoMqJmsSimuladoAdaptador` simula recebimento de evento MQ/JMS.
+2. O adaptador não conversa com controller HTTP; ele aciona diretamente a porta de entrada da aplicação (`ConsumirEventoSaldoAtualizadoPortaEntrada`).
+3. O serviço de aplicação `ServicoProcessamentoEventoSaldoAtualizado` aplica:
+   - idempotência por `idEvento` (`RepositorioEventoProcessadoPortaSaida`),
+   - descarte de evento duplicado,
+   - descarte de evento desatualizado (fora de ordem) para evitar regressão de saldo.
+4. Quando válido, o saldo é persistido em `RepositorioSaldoContaPortaSaida`.
+
+Essa separação preserva os princípios de arquitetura hexagonal e evidencia o caminho de atualização assíncrona, sem acoplamento com a camada web.
+
+### Tratamento conceitual de falhas e DLQ (design)
+Neste repositório, não há integração real com broker. Ainda assim, o desenho recomendado para produção é:
+- `retry` com backoff para falhas transitórias (rede, indisponibilidade temporária);
+- classificação de falhas recuperáveis e não recuperáveis;
+- encaminhamento para DLQ após exceder tentativas máximas;
+- payload + metadados de erro na DLQ para observabilidade e replay controlado;
+- dashboards/alertas por taxa de erro, latência de consumo e volume de DLQ.

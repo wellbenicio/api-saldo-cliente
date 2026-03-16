@@ -15,7 +15,9 @@ public class ProcessadorRegistroArquivoSaldoBatchItemProcessor implements ItemPr
                 new Conta(item.idConta().toString(), item.idTitular().toString()),
                 item.valor(),
                 item.moeda(),
-                item.dataHoraReferencia()
+                item.dataHoraReferencia(),
+                item.dataHoraReferencia(),
+                null
         );
     }
 }

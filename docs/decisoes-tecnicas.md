@@ -42,3 +42,17 @@ Essa decisão reduz ambiguidades de escopo, facilita evolução independente de 
 A integração real com NFS/AWS permanece fora do escopo deste teste técnico, mantendo apenas contratos e adaptadores preparados para evolução.
 
 > Convenção de linguagem deste desafio: documentação e código em português; em contexto de projeto real, a convenção preferível é inglês técnico.
+
+## Registro de amadurecimento técnico da solução
+
+Parte das decisões iniciais foi tomada sob tempo curto de análise do desafio. Após avaliação mais profunda do problema e dos trade-offs operacionais, a proposta foi refinada como amadurecimento técnico (e não como contradição), incluindo:
+
+- troca da estratégia de execução em EC2 por ECS/Fargate + ALB;
+- substituição do discurso de decomposição em microserviços por **serviço central de saldo** integrado a ecossistema distribuído existente;
+- adoção explícita de arquitetura hexagonal (ports and adapters) como arquitetura principal;
+- detalhamento do uso conceitual de SNS + SQS para integração assíncrona na AWS;
+- separação explícita entre autenticação (prova de identidade) e autorização por titularidade (regra de negócio).
+
+Também foi refinado o desenho de mensageria de entrada para saldo quase em tempo real com idempotência por `idEvento`, descarte de duplicidade, proteção contra eventos fora de ordem e tratamento conceitual de falhas com DLQ no nível arquitetural/documental.
+
+> Convenção deste desafio: código em português por escolha simbólica; em projetos reais, a preferência continua sendo inglês técnico para nomenclatura.
