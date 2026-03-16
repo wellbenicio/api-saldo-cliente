@@ -110,7 +110,7 @@ sequenceDiagram
 1. Arquivo consolidado (~50GB) é disponibilizado no ambiente de arquivos (NFS).
 2. A trilha oficial é o pipeline Spring Batch (`LeitorRegistroArquivoSaldoBatch` + `ProcessadorRegistroSaldoBatch` + `EscritorSaldoContaBatch`).
 3. O `LeitorArquivoBatchSaldoNfsAdaptador` reutiliza esse pipeline oficial para leitura e transformação do arquivo consolidado.
-4. Não há trilha legada paralela para leitura/processamento; o processamento batch segue uma única abordagem.
+4. Não há trilha legada paralela para leitura/processamento; o processamento batch segue uma única abordagem com configurações de arquivo/delimitador centralizadas.
 
 ### Sequência: fluxo batch consolidado
 

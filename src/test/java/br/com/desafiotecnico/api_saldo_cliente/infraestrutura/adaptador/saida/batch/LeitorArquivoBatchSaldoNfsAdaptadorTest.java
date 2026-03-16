@@ -29,10 +29,14 @@ class LeitorArquivoBatchSaldoNfsAdaptadorTest {
     Path diretorioTemporario;
 
     @Test
+    @SuppressWarnings("unchecked")
     void deveRetornarVazioQuandoLeitorNaoRetornarRegistros() throws Exception {
         FlatFileItemReader<RegistroArquivoSaldoBatch> itemReader = mock(FlatFileItemReader.class);
         when(itemReader.read()).thenReturn(null);
-        when(leitorRegistroArquivoSaldoBatch.criarLeitor(propriedadesBatchSaldo.caminhoArquivoEntrada().toString(), "|"))
+        when(leitorRegistroArquivoSaldoBatch.criarLeitor(
+                propriedadesBatchSaldo.caminhoArquivoEntrada().toString(),
+                propriedadesBatchSaldo.getDelimitador()
+        ))
                 .thenReturn(itemReader);
 
         LeitorArquivoBatchSaldoNfsAdaptador adaptador = new LeitorArquivoBatchSaldoNfsAdaptador(
@@ -47,6 +51,7 @@ class LeitorArquivoBatchSaldoNfsAdaptadorTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void deveLerRegistrosComFormatoEsperado() throws Exception {
         propriedadesBatchSaldo.setDiretorioEntrada(diretorioTemporario);
         propriedadesBatchSaldo.setNomeArquivo("saldos.csv");
@@ -59,7 +64,10 @@ class LeitorArquivoBatchSaldoNfsAdaptadorTest {
 
         FlatFileItemReader<RegistroArquivoSaldoBatch> itemReader = mock(FlatFileItemReader.class);
         when(itemReader.read()).thenReturn(registro1, registro2, null);
-        when(leitorRegistroArquivoSaldoBatch.criarLeitor(propriedadesBatchSaldo.caminhoArquivoEntrada().toString(), "|"))
+        when(leitorRegistroArquivoSaldoBatch.criarLeitor(
+                propriedadesBatchSaldo.caminhoArquivoEntrada().toString(),
+                propriedadesBatchSaldo.getDelimitador()
+        ))
                 .thenReturn(itemReader);
         when(processadorRegistroSaldoBatch.process(registro1)).thenReturn(saldo1);
         when(processadorRegistroSaldoBatch.process(registro2)).thenReturn(saldo2);

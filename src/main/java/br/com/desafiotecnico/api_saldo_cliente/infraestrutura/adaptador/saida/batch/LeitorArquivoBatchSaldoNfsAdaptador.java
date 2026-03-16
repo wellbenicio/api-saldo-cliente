@@ -33,7 +33,7 @@ public class LeitorArquivoBatchSaldoNfsAdaptador implements LeitorArquivoBatchSa
     public Stream<SaldoConta> lerSaldosConsolidados() {
         var itemReader = leitorRegistroArquivoSaldoBatch.criarLeitor(
                 propriedadesBatchSaldo.caminhoArquivoEntrada().toString(),
-                "|"
+                propriedadesBatchSaldo.getDelimitador()
         );
         List<SaldoConta> saldos = new ArrayList<>();
 

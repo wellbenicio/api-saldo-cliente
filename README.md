@@ -26,6 +26,7 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 ### Pipeline batch oficial
 - O processamento de arquivo consolidado utiliza apenas os componentes oficiais em `infraestrutura.batch.componentes`.
 - O adaptador `LeitorArquivoBatchSaldoNfsAdaptador` depende desse pipeline para leitura/transformação de registros, evitando implementação legada paralela.
+- O caminho do arquivo e o delimitador são centralizados em `saldo.batch.*` via `PropriedadesBatchSaldo` para manter API e job batch alinhados na mesma configuração.
 
 ## Justificativa para classes em português
 Para este desafio técnico, classes, métodos e pacotes foram nomeados em português como escolha simbólica e para manter consistência com o enunciado.
