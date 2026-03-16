@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
  */
 @Component
-@Profile("batch")
+@Profile("batch | local-batch")
 public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitoramentoFalhaBatchListener.class);
