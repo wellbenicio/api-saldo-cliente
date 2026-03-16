@@ -108,8 +108,8 @@ Fluxo arquitetural:
 > Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
 
 ## Decisões arquiteturais consolidadas
-- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês. Detalhes em `docs/adr/ADR-002-nomes-em-portugues.md`.
-- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`. Detalhes em `docs/adr/ADR-008-remocao-jwt-legado.md`.
+- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês.
+- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`.
 
 ## Observabilidade e operacionalização básica
 A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
