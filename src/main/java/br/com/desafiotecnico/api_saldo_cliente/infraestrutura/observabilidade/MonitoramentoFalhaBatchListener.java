@@ -9,12 +9,8 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-/**
- * Convenção deste desafio: nomes em português por escolha simbólica.
- * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
- */
 @Component
-@Profile("batch")
+@Profile("batch | local-batch")
 public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitoramentoFalhaBatchListener.class);
@@ -28,7 +24,7 @@ public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         if (stepExecution.getFailureExceptions() != null && !stepExecution.getFailureExceptions().isEmpty()) {
-            observabilidadeMetricasAplicacao.incrementarFalhasBatch();
+            observabilidadePortaSaida.incrementarFalhasBatch();
             LOGGER.error("Falha no processamento batch. step={}, totalFalhasStep={}",
                     stepExecution.getStepName(),
                     stepExecution.getFailureExceptions().size());

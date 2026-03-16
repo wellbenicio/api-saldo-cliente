@@ -20,7 +20,7 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
             ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
-        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
+        this.observabilidadePortaSaida = observabilidadePortaSaida;
     }
 
     @Override
@@ -30,11 +30,11 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
                 .orElseThrow(() -> new ContaNaoEncontradaExcecao(comando.idConta()));
 
         if (!saldoConta.conta().idTitular().equals(comando.idTitularSolicitante())) {
-            observabilidadeMetricasAplicacao.incrementarNegacoesAcesso();
+            observabilidadePortaSaida.incrementarNegacoesAcesso();
             throw new AcessoNaoAutorizadoContaExcecao(comando.idConta(), comando.idTitularSolicitante());
         }
 
-        observabilidadeMetricasAplicacao.incrementarConsultasSaldo();
+        observabilidadePortaSaida.incrementarConsultasSaldo();
         return saldoConta;
     }
 }

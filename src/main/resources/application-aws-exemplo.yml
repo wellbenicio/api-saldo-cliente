@@ -1,9 +1,9 @@
-# Exemplo de profile aws para referência.
+# Exemplo de profile aws-exemplo para referência.
 # Este arquivo NÃO deve ser usado diretamente em produção.
 spring:
   config:
     activate:
-      on-profile: aws
+      on-profile: aws-exemplo
 
 saldo:
   persistencia:

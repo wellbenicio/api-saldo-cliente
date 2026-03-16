@@ -37,7 +37,7 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.repositorioEventoProcessadoPortaSaida = repositorioEventoProcessadoPortaSaida;
         this.publicadorEventoIntegracaoSaldoPortaSaida = publicadorEventoIntegracaoSaldoPortaSaida;
-        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
+        this.observabilidadePortaSaida = observabilidadePortaSaida;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
             LOGGER.info("Saldo atualizado por evento quase em tempo real. idEvento={}, idConta={}, ocorridoEm={}",
                     comando.idEvento(), comando.idConta(), comando.ocorridoEm());
         } catch (Exception excecao) {
-            observabilidadeMetricasAplicacao.incrementarFalhasProcessamentoEvento();
+            observabilidadePortaSaida.incrementarFalhasProcessamentoEvento();
             throw excecao;
         }
 

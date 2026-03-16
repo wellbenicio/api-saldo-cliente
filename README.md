@@ -20,23 +20,16 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 
 ## Separação explícita entre API e Batch
 - **API (consulta online/autorização de titularidade):** atende requisições síncronas de saldo, valida identidade via JWT e aplica autorização de titularidade no caso de uso.
-- **Batch (carga massiva consolidada e reconciliação):** processa cargas de grande volume e prepara reconciliação de dados sem bloquear o fluxo online.
+- **Batch (carga massiva consolidada e reconciliação):** fluxo oficial implementado com Spring Batch (`FlatFileItemReader` + processor + writer) para processar arquivo consolidado sem bloquear o fluxo online.
 - **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
-
-## Justificativa para classes em português
-Para este desafio técnico, classes, métodos e pacotes foram nomeados em português como escolha simbólica e para manter consistência com o enunciado.
-
-## Observação sobre convenção real de mercado
-Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
-
-> Convenção explícita deste repositório: **português neste desafio; inglês preferível em projeto real**.
 
 ## Segurança nesta fase
 - A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.
-- O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` com:
+- O **único fluxo de autenticação ativo** usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` com:
   - identificador do cliente por `idCliente` (preferencial) ou `sub`;
   - documento obrigatório por `documento`, `cpf` ou `cnpj`;
   - perfis/scopes extraídos de authorities e dos claims `perfisOuScopes`, `scope` ou `scp`.
+- Não há filtro JWT customizado nem validador JWT legado participando da autenticação em runtime.
 - A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta (comparação entre o `idTitular` da conta e o `idCliente` autenticado).
 - Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
 
@@ -47,13 +40,58 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 
 ## Persistência por profile
 - **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
-- **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+- **aws-exemplo** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
 
 > Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
+
+
+## Estratégia explícita de profiles
+- `local`: execução padrão da API com adaptadores JPA/H2 e web app ativo.
+- `batch`: habilita o job batch e desativa camada web (`web-application-type: none`).
+- `aws-exemplo`: ativa apenas os componentes de exemplo para persistência AWS (DynamoDB), sem integração real.
+
+> Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
+
+## Comandos de execução
+- **API local (default):**
+  - `./mvnw spring-boot:run`
+  - ou `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+- **Batch com persistência local (recomendado no repositório):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
+- **Batch com caminho de arquivo customizado:**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
+- **Profile AWS de exemplo (conceitual):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
 ## Consumo de eventos de saldo atualizado (quase em tempo real)
 
 Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
+
+## Fluxo batch oficial
+
+O fluxo batch oficial desta base está centralizado no pacote `infraestrutura.batch`:
+
+1. `ConfiguracaoImportacaoSaldoBatch` define o `Job` e o `Step` de importação.
+2. `LeitorRegistroArquivoSaldoBatch` cria `FlatFileItemReader` para ler CSV/arquivo delimitado.
+3. `ProcessadorRegistroSaldoBatch` converte o registro bruto para `SaldoConta` de domínio.
+4. `EscritorSaldoContaBatch` persiste os saldos pela porta `RepositorioSaldoContaPortaSaida`.
+
+> A trilha legada paralela de reader/processor/modelo batch foi removida para manter um único caminho de execução e testes.
+
+### Mapeamento de classes batch
+
+- **Ativas (oficiais)**
+  - `infraestrutura.batch.configuracao.ConfiguracaoImportacaoSaldoBatch`
+  - `infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch`
+  - `infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch`
+  - `infraestrutura.batch.componentes.EscritorSaldoContaBatch`
+  - `infraestrutura.batch.componentes.RegistroArquivoSaldoBatch`
+
+- **Legadas (removidas da trilha principal)**
+  - `infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader`
+  - `infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor`
+  - `infraestrutura.batch.modelo.RegistroArquivoSaldoBatch`
+  - `infraestrutura.adaptador.saida.batch.LeitorArquivoBatchSaldoNfsAdaptador`
 
 Fluxo arquitetural:
 1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
@@ -67,9 +105,9 @@ Fluxo arquitetural:
 
 > Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
 
-### Convenção de nomes
-Neste desafio, classes/pacotes estão em português por escolha simbólica.
-Em projeto real de mercado, a convenção preferível continua sendo nomes em inglês.
+## Decisões arquiteturais consolidadas
+- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês. Detalhes em `docs/adr/ADR-002-nomes-em-portugues.md`.
+- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`. Detalhes em `docs/adr/ADR-008-remocao-jwt-legado.md`.
 
 ## Observabilidade e operacionalização básica
 A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
