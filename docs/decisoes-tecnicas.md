@@ -19,6 +19,7 @@ Esse refinamento técnico levou, entre outros pontos, a:
 - adoção explícita de arquitetura hexagonal;
 - detalhamento do uso de SNS + SQS para desacoplamento de eventos;
 - separação explícita entre autenticação e autorização por titularidade.
+- separação explícita entre fluxo de API online (consulta/autorização de titularidade) e fluxo batch (carga massiva/reconciliação), preservando domínio compartilhado com responsabilidades operacionais distintas.
 
 Esse movimento é tratado como amadurecimento técnico da solução, e não como contradição.
 
@@ -28,3 +29,16 @@ Após análise mais profunda do requisito de alta disponibilidade, a estratégia
 - execução local com H2 + JPA para desenvolvimento e validação rápida, sem dependência de infraestrutura externa;
 - desenho conceitual de produção com DynamoDB via adapter dedicado no profile `aws`, priorizando disponibilidade gerenciada e escalabilidade horizontal;
 - manutenção do domínio desacoplado da persistência (entidades JPA isoladas na infraestrutura), aderente à arquitetura hexagonal.
+
+
+## Consolidação da separação API/Batch
+Como parte do amadurecimento técnico, a solução passou a documentar de forma objetiva a separação entre:
+- **API online**, responsável por consulta síncrona e autorização de titularidade;
+- **Batch**, responsável por carga massiva consolidada e reconciliação;
+- **domínio compartilhado**, reaproveitado por ambos os fluxos, com limites de responsabilidade explícitos.
+
+Essa decisão reduz ambiguidades de escopo, facilita evolução independente de operação online e processamento em lote, e reforça os limites arquiteturais já definidos nas ADRs.
+
+A integração real com NFS/AWS permanece fora do escopo deste teste técnico, mantendo apenas contratos e adaptadores preparados para evolução.
+
+> Convenção de linguagem deste desafio: documentação e código em português; em contexto de projeto real, a convenção preferível é inglês técnico.
