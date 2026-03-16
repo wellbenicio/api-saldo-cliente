@@ -36,7 +36,7 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 - O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` com:
   - identificador do cliente por `idCliente` (preferencial) ou `sub`;
   - documento obrigatório por `documento`, `cpf` ou `cnpj`;
-  - perfis/scopes extraídos de authorities e dos claims `perfisOuScopes`, `scope` ou `scp`.
+  - perfis/scopes extraídos de authorities e do claim oficial `scope` (com compatibilidade também para `scp`, `perfisOuScopes` e `escopo`).
 - A autorização de negócio por titularidade permanece no caso de uso: mesmo autenticado, o usuário só pode consultar saldo quando for titular da conta (comparação entre o `idTitular` da conta e o `idCliente` autenticado).
 - Essa separação evita acoplamento entre prova de identidade (autenticação) e regra de acesso ao recurso de saldo (autorização por titularidade).
 
