@@ -20,25 +20,4 @@ public class FiltroAutenticacaoJwt extends OncePerRequestFilter {
             throws ServletException, IOException {
         filterChain.doFilter(request, response);
     }
-
-    private Set<String> parseScopes(String scopes) {
-        if (scopes == null || scopes.isBlank()) {
-            return Set.of();
-        }
-        return Arrays.stream(scopes.split("\\s+"))
-                .filter(valor -> !valor.isBlank())
-                .collect(Collectors.toSet());
-    }
-
-    private void escreverErroNaoAutenticado(HttpServletResponse response, String mensagem) throws IOException {
-        ErroApiResposta erroApiResposta = new ErroApiResposta(
-                "NAO_AUTENTICADO",
-                mensagem,
-                OffsetDateTime.now()
-        );
-
-        response.setStatus(HttpStatus.UNAUTHORIZED.value());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getOutputStream(), erroApiResposta);
-    }
 }

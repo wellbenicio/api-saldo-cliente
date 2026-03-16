@@ -3,6 +3,7 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
+import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao.ConfiguracaoSeguranca;

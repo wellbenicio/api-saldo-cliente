@@ -7,6 +7,7 @@ import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.PrincipalConta;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -55,22 +56,41 @@ public class SaldoContaControlador {
     }
 
     private String extrairIdTitular(Principal principal) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
+        }
+
         if (principal instanceof PrincipalConta principalConta) {
-            return principalConta.idTitular();
+            return principalConta.idCliente();
         }
 
         if (principal instanceof JwtAuthenticationToken jwtAuthenticationToken) {
-            Object claim = jwtAuthenticationToken.getTokenAttributes().get("sub");
-            if (claim instanceof String idTitular && !idTitular.isBlank()) {
+            Object claimIdCliente = jwtAuthenticationToken.getTokenAttributes().get("idCliente");
+            if (claimIdCliente instanceof String idCliente && !idCliente.isBlank()) {
+                return idCliente;
+            }
+
+            Object claimSub = jwtAuthenticationToken.getTokenAttributes().get("sub");
+            if (claimSub instanceof String idTitular && !idTitular.isBlank()) {
                 return idTitular;
             }
         }
 
         if (principal instanceof Jwt jwt) {
+            String idCliente = jwt.getClaimAsString("idCliente");
+            if (idCliente != null && !idCliente.isBlank()) {
+                return idCliente;
+            }
+
             String idTitular = jwt.getSubject();
             if (idTitular != null && !idTitular.isBlank()) {
                 return idTitular;
             }
+        }
+
+        String nomePrincipal = principal.getName();
+        if (nomePrincipal != null && !nomePrincipal.isBlank()) {
+            return nomePrincipal;
         }
 
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado no contexto de segurança.");
