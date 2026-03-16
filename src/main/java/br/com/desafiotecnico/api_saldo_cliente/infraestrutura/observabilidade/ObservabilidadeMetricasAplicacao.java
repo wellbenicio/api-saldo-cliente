@@ -1,11 +1,12 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade;
 
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ObservabilidadeMetricasAplicacao {
+public class ObservabilidadeMetricasAplicacao implements ObservabilidadePortaSaida {
 
     private final Counter consultasSaldoCounter;
     private final Counter negacoesAcessoCounter;
@@ -30,18 +31,22 @@ public class ObservabilidadeMetricasAplicacao {
                 .register(meterRegistry);
     }
 
+    @Override
     public void incrementarConsultasSaldo() {
         consultasSaldoCounter.increment();
     }
 
+    @Override
     public void incrementarNegacoesAcesso() {
         negacoesAcessoCounter.increment();
     }
 
+    @Override
     public void incrementarFalhasBatch() {
         falhasBatchCounter.increment();
     }
 
+    @Override
     public void incrementarFalhasProcessamentoEvento() {
         falhasProcessamentoEventoCounter.increment();
     }
