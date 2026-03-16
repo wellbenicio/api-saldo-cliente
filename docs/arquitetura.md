@@ -72,7 +72,7 @@ O componente segue arquitetura hexagonal: regras no núcleo e dependências para
 
 ## Fluxo da API
 1. Cliente envia requisição ao endpoint de saldo com `Authorization: Bearer <token JWT>`.
-2. Camada de segurança valida o token JWT via Spring Security OAuth2 Resource Server.
+2. Camada de segurança valida o token JWT via Spring Security OAuth2 Resource Server (único mecanismo ativo de autenticação).
 3. Após validação, `ConversorJwtAutenticacao` monta o principal `PrincipalConta` com `idCliente` (via claim `idCliente` ou `sub`) e `documento` obrigatório (via `documento`, `cpf` ou `cnpj`).
 4. Adaptador HTTP encaminha `idConta` e o `idCliente` autenticado para a porta de entrada da aplicação.
 5. Caso de uso executa a regra de autorização por titularidade, verificando se o `idCliente` autenticado corresponde ao `idTitular` da conta consultada.
