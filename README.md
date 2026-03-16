@@ -40,20 +40,28 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 
 ## Persistência por profile
 - **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
-- **batch**: ativa configuração de processamento batch (jobs/steps/leitor/escritor), devendo ser combinado com um profile de persistência.
-- **local,batch** (recomendado para execução local): combina JPA/H2 e infraestrutura batch no mesmo contexto, garantindo resolução de `RepositorioSaldoContaPortaSaida` e datasource.
-- **local-batch** (atalho equivalente): profile composto explícito para subir batch local sem precisar informar dois profiles.
-- **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+- **aws-exemplo** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
 
 > Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
 
-### Execução do batch local
-Use um profile que carregue **batch + persistência** no mesmo contexto:
 
-- `./mvnw spring-boot:run -Dspring-boot.run.profiles=local,batch -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
-- ou `./mvnw spring-boot:run -Dspring-boot.run.profiles=local-batch -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
+## Estratégia explícita de profiles
+- `local`: execução padrão da API com adaptadores JPA/H2 e web app ativo.
+- `batch`: habilita o job batch e desativa camada web (`web-application-type: none`).
+- `aws-exemplo`: ativa apenas os componentes de exemplo para persistência AWS (DynamoDB), sem integração real.
 
-> Evite executar somente com `batch`, pois isso não inicializa automaticamente os adaptadores JPA/datasource locais.
+> Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
+
+## Comandos de execução
+- **API local (default):**
+  - `./mvnw spring-boot:run`
+  - ou `./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+- **Batch com persistência local (recomendado no repositório):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
+- **Batch com caminho de arquivo customizado:**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
+- **Profile AWS de exemplo (conceitual):**
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
 ## Consumo de eventos de saldo atualizado (quase em tempo real)
 
