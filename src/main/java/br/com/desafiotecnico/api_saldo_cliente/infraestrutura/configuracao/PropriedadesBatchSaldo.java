@@ -22,6 +22,11 @@ public class PropriedadesBatchSaldo {
      */
     private String nomeArquivo = "saldo-consolidado.csv";
 
+    /**
+     * Delimitador esperado no arquivo consolidado.
+     */
+    private String delimitador = "|";
+
     public Path getDiretorioEntrada() {
         return diretorioEntrada;
     }
@@ -36,6 +41,14 @@ public class PropriedadesBatchSaldo {
 
     public void setNomeArquivo(String nomeArquivo) {
         this.nomeArquivo = nomeArquivo;
+    }
+
+    public String getDelimitador() {
+        return delimitador;
+    }
+
+    public void setDelimitador(String delimitador) {
+        this.delimitador = delimitador;
     }
 
     public Path caminhoArquivoEntrada() {

@@ -59,7 +59,7 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 - **Batch com persistência local (recomendado no repositório):**
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local`
 - **Batch com caminho de arquivo customizado:**
-  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"`
+  - `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.diretorio-entrada=/tmp --saldo.batch.nome-arquivo=saldos.csv --saldo.batch.delimitador=|"`
 - **Profile AWS de exemplo (conceitual):**
   - `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo`
 
@@ -77,6 +77,8 @@ O fluxo batch oficial desta base está centralizado no pacote `infraestrutura.ba
 4. `EscritorSaldoContaBatch` persiste os saldos pela porta `RepositorioSaldoContaPortaSaida`.
 
 > A trilha legada paralela de reader/processor/modelo batch foi removida para manter um único caminho de execução e testes.
+
+> A configuração de arquivo/delimitador fica centralizada em `PropriedadesBatchSaldo` (`saldo.batch.diretorio-entrada`, `saldo.batch.nome-arquivo`, `saldo.batch.delimitador`).
 
 ### Mapeamento de classes batch
 

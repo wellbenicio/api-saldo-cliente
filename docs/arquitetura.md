@@ -112,6 +112,7 @@ sequenceDiagram
 3. `ProcessadorRegistroSaldoBatch` converte os registros de entrada para o modelo de domínio `SaldoConta`.
 4. `EscritorSaldoContaBatch` persiste os saldos pela porta de repositório.
 5. `MonitoramentoFalhaBatchListener` registra falhas do step para observabilidade.
+6. Configuração de entrada é centralizada em `PropriedadesBatchSaldo` (`saldo.batch.diretorio-entrada`, `saldo.batch.nome-arquivo`, `saldo.batch.delimitador`).
 
 ### Sequência: fluxo batch consolidado
 

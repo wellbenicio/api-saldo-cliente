@@ -6,4 +6,4 @@ spring:
     web-application-type: none
 
 # Exemplo de execução:
-# ./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"
+# ./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local -Dspring-boot.run.arguments="--saldo.batch.diretorio-entrada=/tmp --saldo.batch.nome-arquivo=saldos.csv --saldo.batch.delimitador=|"
