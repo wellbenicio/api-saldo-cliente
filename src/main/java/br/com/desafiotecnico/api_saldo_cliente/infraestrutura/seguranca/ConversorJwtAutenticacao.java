@@ -17,9 +17,10 @@ import java.util.Set;
 @Component
 public class ConversorJwtAutenticacao implements Converter<Jwt, AbstractAuthenticationToken> {
 
+    private static final String CLAIM_OFICIAL_PERMISSOES = "scope";
     private static final List<String> CLAIMS_ID_CLIENTE = List.of("idCliente", "sub");
     private static final List<String> CLAIMS_DOCUMENTO = List.of("documento", "cpf", "cnpj");
-    private static final List<String> CLAIMS_PERFIS_OU_SCOPES = List.of("perfisOuScopes", "scope", "scp");
+    private static final List<String> CLAIMS_PERMISSOES_COMPATIVEIS = List.of(CLAIM_OFICIAL_PERMISSOES, "scp", "perfisOuScopes", "escopo");
 
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
@@ -59,7 +60,7 @@ public class ConversorJwtAutenticacao implements Converter<Jwt, AbstractAuthenti
                     .forEach(perfisOuScopes::add);
         }
 
-        CLAIMS_PERFIS_OU_SCOPES.stream()
+        CLAIMS_PERMISSOES_COMPATIVEIS.stream()
                 .map(jwt::getClaimAsString)
                 .filter(valor -> valor != null && !valor.isBlank())
                 .flatMap(valor -> List.of(valor.split("\\s+")).stream())

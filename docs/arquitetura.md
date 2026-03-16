@@ -108,25 +108,27 @@ sequenceDiagram
 
 ## Fluxo batch
 1. Arquivo consolidado (~50GB) é disponibilizado no ambiente de arquivos (NFS).
-2. Adaptador de leitura batch representa o ponto de integração com esse arquivo.
-3. Em implementação futura, o conteúdo lido será processado e persistido pelo fluxo de aplicação.
-4. Neste estágio, a estrutura está preparada sem processamento complexo.
+2. `LeitorRegistroArquivoSaldoBatch` usa `FlatFileItemReader` para ler o arquivo consolidado.
+3. `ProcessadorRegistroSaldoBatch` converte os registros de entrada para o modelo de domínio `SaldoConta`.
+4. `EscritorSaldoContaBatch` persiste os saldos pela porta de repositório.
+5. `MonitoramentoFalhaBatchListener` registra falhas do step para observabilidade.
 
 ### Sequência: fluxo batch consolidado
 
 ```mermaid
 sequenceDiagram
     participant NFS as Arquivo Consolidado (NFS conceitual)
-    participant BAT as Adaptador Batch
-    participant APP as Serviço de Aplicação
+    participant LEI as FlatFileItemReader
+    participant PRO as Processador Batch
+    participant ESC as Escritor Batch
     participant REP as Repositório de Saldo
 
-    NFS->>BAT: Disponibiliza arquivo consolidado
-    BAT->>BAT: Leitura e parsing do arquivo
-    BAT->>APP: Enviar registros normalizados
-    APP->>APP: Regras de processamento
-    APP->>REP: Atualizar saldo consolidado
-    REP-->>APP: Confirma persistência
+    NFS->>LEI: Disponibiliza arquivo consolidado
+    LEI->>LEI: Leitura e parsing do arquivo
+    LEI->>PRO: Registro bruto
+    PRO->>ESC: SaldoConta normalizado
+    ESC->>REP: Atualizar saldo consolidado
+    REP-->>ESC: Confirma persistência
 ```
 
 ## Fluxo de eventos

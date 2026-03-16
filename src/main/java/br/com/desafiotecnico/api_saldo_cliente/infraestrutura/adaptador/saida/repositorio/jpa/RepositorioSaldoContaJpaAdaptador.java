@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-@Profile("local")
+@Profile("local | local-batch")
 public class RepositorioSaldoContaJpaAdaptador implements RepositorioSaldoContaPortaSaida {
 
     private final SaldoContaJpaRepositorio saldoContaJpaRepositorio;
