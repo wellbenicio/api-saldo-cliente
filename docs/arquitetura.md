@@ -34,8 +34,10 @@ Camadas:
 1. Atualizações de saldo chegam por mensageria (ex.: MQ em cenário real).
 2. Serviço de aplicação atualiza estado de saldo.
 3. Evento de domínio `EventoSaldoAtualizado` é criado.
-4. Porta de saída publica evento para ecossistema AWS (SNS/SQS em cenário real).
-5. Adaptador de publicação contém comentários para configuração por variáveis de ambiente/secrets.
+4. Porta de saída publica evento de integração para ecossistema AWS.
+5. SNS é o ponto de fanout e consumidores assinam via SQS em cenário real.
+6. Esse desenho desacopla consumidores, permite retries independentes e aumenta resiliência operacional.
+7. Adaptadores locais/AWS mantêm a infraestrutura desacoplada do núcleo de aplicação.
 
 
 ## Estratégia de persistência
@@ -68,3 +70,19 @@ Neste repositório, não há integração real com broker. Ainda assim, o desenh
 - encaminhamento para DLQ após exceder tentativas máximas;
 - payload + metadados de erro na DLQ para observabilidade e replay controlado;
 - dashboards/alertas por taxa de erro, latência de consumo e volume de DLQ.
+
+
+## Publicação de evento de integração de saldo atualizado
+- Evento de integração: `dominio.modelo.EventoIntegracaoSaldoAtualizado`.
+- Porta de saída: `aplicacao.porta.saida.PublicadorEventoIntegracaoSaldoPortaSaida`.
+- Adapter local padrão: `infraestrutura.adaptador.saida.evento.PublicadorEventoIntegracaoSaldoLogAdaptador` (log estruturado).
+- Adapter AWS esqueleto: `infraestrutura.adaptador.saida.evento.PublicadorEventoIntegracaoSaldoSnsAwsAdaptador` (SNS, sem integração real).
+
+### Papel do SNS + SQS no cenário real
+- SNS atua como fanout para disseminar o evento a múltiplos domínios consumidores.
+- Cada consumidor assina via fila SQS própria, com isolamento de throughput, retry e DLQ.
+- Esse padrão reduz acoplamento temporal e aumenta resiliência do ecossistema distribuído.
+
+### Outbox como evolução futura
+Nesta avaliação técnica, a publicação é direta após atualização do saldo.
+Como evolução recomendada para produção, adotar padrão Outbox transacional para garantir consistência entre persistência de saldo e publicação assíncrona.

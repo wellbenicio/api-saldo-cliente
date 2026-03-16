@@ -13,6 +13,10 @@ A solução foi desenhada para representar um serviço de saldo robusto e evolut
 ## Refinamento pós-análise
 Algumas decisões iniciais foram tomadas sob tempo curto de análise e refinadas após avaliação mais profunda do problema e dos requisitos não funcionais.
 
+
+Inicialmente, sob análise mais superficial e restrição de tempo, a documentação tratava mensageria AWS de forma mais genérica.
+Com aprofundamento, o desenho foi refinado explicitamente para SNS + SQS (fanout + filas de assinatura por consumidor), com justificativa de desacoplamento e resiliência.
+
 Esse refinamento técnico levou, entre outros pontos, a:
 - troca de EC2 por ECS/Fargate + ALB para melhor operação e escalabilidade;
 - substituição do discurso de microserviços por serviço central de saldo integrado a ecossistema distribuído;
