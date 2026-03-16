@@ -1,7 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca;
 
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.ErroApiResposta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,11 +18,11 @@ import java.time.OffsetDateTime;
 public class ManipuladorAcessoNegado implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
     public ManipuladorAcessoNegado(
             ObjectMapper objectMapper,
-            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+            ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.objectMapper = objectMapper;
         this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;

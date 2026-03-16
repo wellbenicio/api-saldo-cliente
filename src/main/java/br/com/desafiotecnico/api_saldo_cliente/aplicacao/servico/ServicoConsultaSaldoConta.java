@@ -6,18 +6,18 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrada {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
     public ServicoConsultaSaldoConta(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
-            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+            ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;

@@ -8,7 +8,7 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.EventoIntegracaoSaldoAtualizado;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,13 +26,13 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida;
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida;
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
     public ServicoProcessamentoEventoSaldoAtualizado(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
             RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida,
             PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida,
-            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+            ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.repositorioEventoProcessadoPortaSaida = repositorioEventoProcessadoPortaSaida;

@@ -1,6 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.aplicacao.servico;
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.RepositorioSaldoContaPortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
@@ -20,7 +21,8 @@ import static org.mockito.Mockito.when;
 class ServicoConsultaSaldoContaTest {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
-    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida);
+    private final ObservabilidadePortaSaida observabilidadePortaSaida = mock(ObservabilidadePortaSaida.class);
+    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida, observabilidadePortaSaida);
 
     @Test
     void deveRetornarSaldoQuandoTitularSolicitanteForDonoDaConta() {

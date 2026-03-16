@@ -1,22 +1,19 @@
-package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade;
+package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.saida.observabilidade;
 
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
-/**
- * Convenção deste desafio: nomes em português por escolha simbólica.
- * Em projeto real de mercado, a preferência tende a ser nomenclatura em inglês.
- */
 @Component
-public class ObservabilidadeMetricasAplicacao {
+public class ObservabilidadeMicrometerAdaptador implements ObservabilidadePortaSaida {
 
     private final Counter consultasSaldoCounter;
     private final Counter negacoesAcessoCounter;
     private final Counter falhasBatchCounter;
     private final Counter falhasProcessamentoEventoCounter;
 
-    public ObservabilidadeMetricasAplicacao(MeterRegistry meterRegistry) {
+    public ObservabilidadeMicrometerAdaptador(MeterRegistry meterRegistry) {
         this.consultasSaldoCounter = Counter.builder("saldo_consultas_total")
                 .description("Total de consultas de saldo realizadas")
                 .register(meterRegistry);
@@ -34,18 +31,22 @@ public class ObservabilidadeMetricasAplicacao {
                 .register(meterRegistry);
     }
 
+    @Override
     public void incrementarConsultasSaldo() {
         consultasSaldoCounter.increment();
     }
 
+    @Override
     public void incrementarNegacoesAcesso() {
         negacoesAcessoCounter.increment();
     }
 
+    @Override
     public void incrementarFalhasBatch() {
         falhasBatchCounter.increment();
     }
 
+    @Override
     public void incrementarFalhasProcessamentoEvento() {
         falhasProcessamentoEventoCounter.increment();
     }

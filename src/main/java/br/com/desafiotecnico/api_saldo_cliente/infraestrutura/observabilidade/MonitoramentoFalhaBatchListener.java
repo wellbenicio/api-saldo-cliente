@@ -1,5 +1,6 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade;
 
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -18,9 +19,9 @@ public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitoramentoFalhaBatchListener.class);
 
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
-    public MonitoramentoFalhaBatchListener(ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao) {
+    public MonitoramentoFalhaBatchListener(ObservabilidadePortaSaida observabilidadeMetricasAplicacao) {
         this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
     }
 
