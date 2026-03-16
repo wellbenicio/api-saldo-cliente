@@ -3,7 +3,6 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.ConsultarSaldoContaPortaEntrada;
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.ConsultarSaldoContaComando;
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
-import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao.ConfiguracaoSeguranca;
@@ -19,6 +18,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.web.servlet.RequestBuilder;
 
 import java.math.BigDecimal;
@@ -32,14 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SaldoContaControlador.class)
-@Import({
-        TratadorGlobalExcecao.class,
-        ConfiguracaoSeguranca.class,
-        ConversorJwtAutenticacao.class,
-        ManipuladorAutenticacaoNaoAutenticado.class,
-        ManipuladorAcessoNegado.class
-})
-@AutoConfigureMockMvc
+@Import(TratadorGlobalExcecao.class)
+@AutoConfigureMockMvc(addFilters = false)
 class SaldoContaControladorValidacaoTest {
 
     @Autowired
@@ -47,9 +41,6 @@ class SaldoContaControladorValidacaoTest {
 
     @MockitoBean
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
-
-    @MockitoBean
-    private JwtDecoder jwtDecoder;
 
     @Test
     void deveRetornarSaldoQuandoEntradaValida() throws Exception {
@@ -84,8 +75,8 @@ class SaldoContaControladorValidacaoTest {
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .with(jwt().jwt(jwt -> jwt.claim("sub", "titular-999")))
                         .accept(APPLICATION_JSON))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"));
     }
 
     @Test

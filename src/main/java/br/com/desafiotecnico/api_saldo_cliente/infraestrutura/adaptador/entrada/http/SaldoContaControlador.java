@@ -7,7 +7,6 @@ import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.entrada.
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.PrincipalConta;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;

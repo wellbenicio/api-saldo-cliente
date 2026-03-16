@@ -30,7 +30,7 @@ class SaldoContaControladorSegurancaIntegracaoTest {
 
     @Test
     void deveRetornar200QuandoTokenValidoETitularDaConta() throws Exception {
-        String token = gerarToken("titular-001");
+        String token = gerarToken("titular-001", "12345678900", "conta:saldo:consultar");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -40,17 +40,18 @@ class SaldoContaControladorSegurancaIntegracaoTest {
     }
 
     @Test
-    void deveRetornar403QuandoTokenValidoEMasSolicitanteNaoTitular() throws Exception {
-        String token = gerarToken("titular-999");
+    void deveRetornar403QuandoTokenValidoMasSolicitanteNaoTitular() throws Exception {
+        String token = gerarToken("titular-999", "12345678900", "conta:saldo:consultar");
 
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"));
+                .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"))
+                .andExpect(jsonPath("$.mensagem").value("Acesso não autorizado para titular titular-999 na conta 12345"));
     }
 
     @Test
-    void deveRetornar401QuandoTokenInvalidoOuAusente() throws Exception {
+    void deveRetornar401QuandoTokenInvalido() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized());
@@ -59,12 +60,14 @@ class SaldoContaControladorSegurancaIntegracaoTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    private String gerarToken(String sujeito) {
+    private String gerarToken(String sujeito, String documento, String escopo) {
         Instant agora = Instant.now();
         SecretKey chave = Keys.hmacShaKeyFor(SEGREDO.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .subject(sujeito)
+                .claim("documento", documento)
+                .claim("escopo", escopo)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(10, ChronoUnit.MINUTES)))
                 .signWith(chave)
