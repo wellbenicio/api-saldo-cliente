@@ -20,7 +20,7 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 
 ## Separação explícita entre API e Batch
 - **API (consulta online/autorização de titularidade):** atende requisições síncronas de saldo, valida identidade via JWT e aplica autorização de titularidade no caso de uso.
-- **Batch (carga massiva consolidada e reconciliação):** processa cargas de grande volume e prepara reconciliação de dados sem bloquear o fluxo online.
+- **Batch (carga massiva consolidada e reconciliação):** fluxo oficial implementado com Spring Batch (`FlatFileItemReader` + processor + writer) para processar arquivo consolidado sem bloquear o fluxo online.
 - **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
 
 ## Justificativa para classes em português
@@ -54,6 +54,32 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 ## Consumo de eventos de saldo atualizado (quase em tempo real)
 
 Para complementar o batch consolidado, o projeto agora inclui a estrutura de consumo de eventos de saldo via mensageria de entrada simulada (MQ/JMS), mantendo desacoplamento total do controller HTTP.
+
+## Fluxo batch oficial
+
+O fluxo batch oficial desta base está centralizado no pacote `infraestrutura.batch`:
+
+1. `ConfiguracaoImportacaoSaldoBatch` define o `Job` e o `Step` de importação.
+2. `LeitorRegistroArquivoSaldoBatch` cria `FlatFileItemReader` para ler CSV/arquivo delimitado.
+3. `ProcessadorRegistroSaldoBatch` converte o registro bruto para `SaldoConta` de domínio.
+4. `EscritorSaldoContaBatch` persiste os saldos pela porta `RepositorioSaldoContaPortaSaida`.
+
+> A trilha legada paralela de reader/processor/modelo batch foi removida para manter um único caminho de execução e testes.
+
+### Mapeamento de classes batch
+
+- **Ativas (oficiais)**
+  - `infraestrutura.batch.configuracao.ConfiguracaoImportacaoSaldoBatch`
+  - `infraestrutura.batch.componentes.LeitorRegistroArquivoSaldoBatch`
+  - `infraestrutura.batch.componentes.ProcessadorRegistroSaldoBatch`
+  - `infraestrutura.batch.componentes.EscritorSaldoContaBatch`
+  - `infraestrutura.batch.componentes.RegistroArquivoSaldoBatch`
+
+- **Legadas (removidas da trilha principal)**
+  - `infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader`
+  - `infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor`
+  - `infraestrutura.batch.modelo.RegistroArquivoSaldoBatch`
+  - `infraestrutura.adaptador.saida.batch.LeitorArquivoBatchSaldoNfsAdaptador`
 
 Fluxo arquitetural:
 1. `ConsumidorSaldoMqJmsSimuladoAdaptador` recebe a mensagem (simulada).
