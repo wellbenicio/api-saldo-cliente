@@ -47,17 +47,24 @@ class SaldoContaControladorSegurancaIntegracaoTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("ACESSO_NAO_AUTORIZADO"))
-                .andExpect(jsonPath("$.mensagem").value("Acesso não autorizado para titular titular-999 na conta 12345"));
+                .andExpect(jsonPath("$.mensagem").value("Acesso não autorizado para titular titular-999 na conta 12345"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
     void deveRetornar401QuandoTokenInvalido() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
+                .andExpect(jsonPath("$.mensagem").value("Autenticação obrigatória para acessar este recurso."))
+                .andExpect(jsonPath("$.timestamp").exists());
 
         mockMvc.perform(get("/v1/contas/12345/saldo"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
+                .andExpect(jsonPath("$.mensagem").value("Autenticação obrigatória para acessar este recurso."))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     private String gerarToken(String sujeito, String documento, String escopo) {
