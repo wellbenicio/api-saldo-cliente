@@ -26,10 +26,17 @@ As decisões iniciais foram tomadas sob tempo curto de análise. Após avaliaç�
 
 Esse refinamento é tratado como **amadurecimento técnico da solução**, e não como contradição.
 
+Refinamentos explicitamente consolidados:
+- **EC2 -> ECS/Fargate + ALB** para melhorar elasticidade operacional e reduzir custo de gestão de infraestrutura.
+- **Discurso de microsserviços -> serviço central de saldo** para refletir melhor o problema real e evitar decomposição artificial.
+- **MVC -> arquitetura hexagonal** como arquitetura principal para reduzir acoplamento com frameworks.
+- **Mensageria genérica -> SNS + SQS** com papéis claros (fanout no SNS, isolamento/retry/DLQ por consumidor em SQS).
+- **JWT simples -> autenticação JWT validada + autorização por titularidade** no caso de uso.
+
 ## Escopo de evolução
 A integração real com NFS/AWS permanece fora do escopo deste teste técnico, mantendo apenas contratos e adaptadores preparados para evolução.
 
-## Situação atual validada
-- A suíte de testes (`./mvnw test`) executa localmente com sucesso.
-- O profile `local` não depende de AWS, MQ ou NFS reais para subir os componentes centrais.
-- A autenticação JWT continua obrigatória para os endpoints de negócio, mas usa decoder HS256 local com segredo configurável em propriedade (`seguranca.jwt.segredo-assinatura`), sem dependência de IdP externo neste repositório.
+## Referências consolidadas
+- Arquitetura da solução: `docs/arquitetura.md`.
+- Observabilidade operacional: `docs/observabilidade.md`.
+- Operação batch: `docs/operacao-batch.md`.

@@ -213,3 +213,63 @@ Neste repositório, não há integração real com broker. Ainda assim, o desenh
 ### Outbox como evolução futura
 Nesta avaliação técnica, a publicação é direta após atualização do saldo.
 Como evolução recomendada para produção, adotar padrão Outbox transacional para garantir consistência entre persistência de saldo e publicação assíncrona.
+
+## DDD e separação de camadas (avaliação objetiva)
+### Nível de uso de DDD no projeto
+- **DDD parcial/pragmático**, não completo.
+- Há sinais de modelagem de domínio e fronteiras técnicas claras, porém sem todo o arcabouço tático/estratégico clássico (ex.: agregados explícitos, linguagem ubíqua formalizada, context map completo).
+
+### Evidências encontradas
+- **Domínio separado de infraestrutura**: modelos e exceções de negócio em `dominio` sem acoplamento direto a JPA/Spring.
+- **Aplicação separada por casos de uso**: serviços em `aplicacao.servico` orquestram regras e chamam portas.
+- **Infraestrutura desacoplada por adaptadores**: HTTP, batch, mensageria, observabilidade e repositórios concretos em `infraestrutura`.
+
+### Bounded contexts
+- Não foi encontrado mapeamento formal de múltiplos bounded contexts.
+- O projeto opera como **um serviço central de saldo**, com fronteira funcional única e integrações externas por portas/adaptadores.
+
+## Design patterns efetivamente identificados no código
+
+### 1) Ports and Adapters (Hexagonal)
+- **Onde aparece**: pacotes `aplicacao.porta.entrada`, `aplicacao.porta.saida`, serviços de aplicação e adaptadores em `infraestrutura.adaptador`.
+- **Por que foi usado**: isolar regras de negócio e permitir emulação local de integrações externas (AWS/MQ/NFS) sem acoplamento do núcleo.
+
+### 2) Dependency Injection
+- **Onde aparece**: injeção por construtor em controladores, serviços, configurações e adaptadores Spring.
+- **Por que foi usado**: reduzir acoplamento, facilitar testes e permitir troca de implementações por perfil.
+
+### 3) Strategy (seleção por implementação de porta)
+- **Onde aparece**: porta `PublicadorEventoIntegracaoSaldoPortaSaida` com implementações `PublicadorEventoIntegracaoSaldoLogAdaptador` e `PublicadorEventoIntegracaoSaldoSnsAwsAdaptador`.
+- **Por que foi usado**: variar estratégia de publicação conforme ambiente/objetivo (local x AWS conceitual).
+
+### 4) Adapter
+- **Onde aparece**: adaptadores HTTP, mensageria, observabilidade e persistência (`RepositorioSaldoContaJpaAdaptador`, `RepositorioSaldoContaMemoriaAdaptador`, `RepositorioSaldoContaDynamoDbAdaptador`).
+- **Por que foi usado**: traduzir contrato de porta para tecnologia específica sem contaminar domínio/aplicação.
+
+### 5) Repository
+- **Onde aparece**: `RepositorioSaldoContaPortaSaida`, `RepositorioEventoProcessadoPortaSaida` e implementações JPA/memória/AWS.
+- **Por que foi usado**: abstrair acesso a dados do caso de uso.
+
+### 6) Use Case / Application Service
+- **Onde aparece**: `ServicoConsultaSaldoConta` e `ServicoProcessamentoEventoSaldoAtualizado`.
+- **Por que foi usado**: concentrar regras de aplicação (autorização por titularidade, idempotência, descarte de evento antigo).
+
+### 7) DTO
+- **Onde aparece**: `ConsultarSaldoContaHttpEntrada`, `SaldoContaSaidaDto`, comandos de porta de entrada.
+- **Por que foi usado**: separar contrato de entrada/saída de API do modelo de domínio.
+
+### 8) Value Object (parcial)
+- **Onde aparece**: uso de records imutáveis de domínio (`Conta`, eventos), com semântica de valor.
+- **Por que foi usado**: representar dados de negócio com imutabilidade e comparação por valor.
+
+## Patterns não identificados de forma explícita
+- **Factory**: não há factory dedicado claramente nomeado.
+- **Facade**: não há fachada explícita centralizando múltiplos subsistemas.
+- **Template Method**: não há hierarquia com método-template explícito no domínio/aplicação.
+- **Domain Service**: serviços principais atuam como serviços de aplicação, não há separação forte de domain service específico.
+- **Outbox**: não implementado; citado como evolução futura.
+
+## O que seria diferente em produção
+- Formalização mais ampla de DDD estratégico (context map, contratos versionados entre contextos e governança de eventos).
+- Outbox transacional para publicação de eventos com maior garantia de consistência.
+- Implementações reais de conectores (MQ, SNS/SQS, NFS/EFS) com políticas robustas de retry, DLQ, segurança e operação.
