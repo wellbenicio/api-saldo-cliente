@@ -13,6 +13,7 @@ Misturar esses níveis em um único ponto tende a reduzir clareza, dificultar te
 ## Decisão
 Separar explicitamente responsabilidades:
 - **Autenticação** no boundary de entrada (resource server JWT): validação de token, assinatura, expiração, issuer/audience e extração de claims.
+- Não existem componentes legados (filtro JWT customizado/validador manual) no fluxo ativo de autenticação.
 - **Autorização por titularidade** no caso de uso de consulta de saldo: validação de que o sujeito autenticado possui permissão para o recurso solicitado.
 
 Essa separação preserva a arquitetura hexagonal: autenticação é preocupação de adapter de entrada; autorização de negócio é regra de aplicação/domínio.

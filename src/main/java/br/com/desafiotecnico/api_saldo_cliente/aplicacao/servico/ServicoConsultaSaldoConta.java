@@ -6,21 +6,21 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.Repositorio
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutorizadoContaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
+import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.ObservabilidadePortaSaida;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrada {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao;
+    private final ObservabilidadePortaSaida observabilidadePortaSaida;
 
     public ServicoConsultaSaldoConta(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
-            ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao
+            ObservabilidadePortaSaida observabilidadePortaSaida
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
-        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
+        this.observabilidadePortaSaida = observabilidadePortaSaida;
     }
 
     @Override
@@ -30,11 +30,11 @@ public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrad
                 .orElseThrow(() -> new ContaNaoEncontradaExcecao(comando.idConta()));
 
         if (!saldoConta.conta().idTitular().equals(comando.idTitularSolicitante())) {
-            observabilidadeMetricasAplicacao.incrementarNegacoesAcesso();
+            observabilidadePortaSaida.incrementarNegacoesAcesso();
             throw new AcessoNaoAutorizadoContaExcecao(comando.idConta(), comando.idTitularSolicitante());
         }
 
-        observabilidadeMetricasAplicacao.incrementarConsultasSaldo();
+        observabilidadePortaSaida.incrementarConsultasSaldo();
         return saldoConta;
     }
 }

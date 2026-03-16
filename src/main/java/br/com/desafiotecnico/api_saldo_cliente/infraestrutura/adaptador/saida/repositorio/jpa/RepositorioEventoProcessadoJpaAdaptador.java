@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.time.OffsetDateTime;
 
 @Component
-@Profile("local")
+@Profile("local | local-batch")
 public class RepositorioEventoProcessadoJpaAdaptador implements RepositorioEventoProcessadoPortaSaida {
 
     private final EventoProcessadoJpaRepositorio eventoProcessadoJpaRepositorio;

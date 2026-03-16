@@ -69,6 +69,20 @@ class ConversorJwtAutenticacaoTest {
     }
 
     @Test
+    void deveManterRetrocompatibilidadeComClaimEscopo() {
+        Jwt jwt = criarJwt(Map.of(
+                "idCliente", "cliente-001",
+                "documento", "12345678900",
+                "escopo", "saldo:read"
+        ));
+
+        JwtAuthenticationToken autenticacao = (JwtAuthenticationToken) conversorJwtAutenticacao.convert(jwt);
+        PrincipalConta principalConta = assertInstanceOf(PrincipalConta.class, autenticacao.getPrincipal());
+
+        assertTrue(principalConta.perfisOuScopes().contains("saldo:read"));
+    }
+
+    @Test
     void deveFalharQuandoJwtNaoContiverClaimObrigatoriaIdCliente() {
         Jwt jwt = criarJwt(Map.of(
                 "documento", "12345678900",
