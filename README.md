@@ -23,14 +23,6 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 - **Batch (carga massiva consolidada e reconciliação):** processa cargas de grande volume e prepara reconciliação de dados sem bloquear o fluxo online.
 - **Domínio compartilhado, responsabilidades diferentes:** API e Batch reutilizam o mesmo núcleo de domínio e contratos de aplicação, mas com responsabilidades operacionais distintas.
 
-## Justificativa para classes em português
-Para este desafio técnico, classes, métodos e pacotes foram nomeados em português como escolha simbólica e para manter consistência com o enunciado.
-
-## Observação sobre convenção real de mercado
-Em projeto real, a convenção preferível é utilizar nomes em inglês para código, pacotes e artefatos técnicos, visando padronização internacional e melhor interoperabilidade entre times.
-
-> Convenção explícita deste repositório: **português neste desafio; inglês preferível em projeto real**.
-
 ## Segurança nesta fase
 - A API usa **Spring Security OAuth2 Resource Server** para autenticação via JWT Bearer Token.
 - O fluxo de autenticação usa `oauth2ResourceServer().jwt(...)` com `ConversorJwtAutenticacao`, montando o principal de domínio `PrincipalConta` com:
@@ -67,9 +59,9 @@ Fluxo arquitetural:
 
 > Importante: em ambiente real, o listener seria integrado a IBM MQ/JMS com configuração segura de host, channel, queue manager e credenciais vindas de secret manager. Neste desafio, a integração é propositalmente simulada.
 
-### Convenção de nomes
-Neste desafio, classes/pacotes estão em português por escolha simbólica.
-Em projeto real de mercado, a convenção preferível continua sendo nomes em inglês.
+## Decisões arquiteturais consolidadas
+- **Convenção linguística:** o repositório mantém nomenclatura em português por contexto do desafio; para cenários reais, a convenção preferível é nomenclatura técnica em inglês. Detalhes em `docs/adr/ADR-002-nomes-em-portugues.md`.
+- **JWT legado:** classes de validação/filtro JWT legadas foram removidas para eliminar duplicidade de estratégia. A autenticação oficial fica centralizada em Spring Security OAuth2 Resource Server (`oauth2ResourceServer().jwt(...)`) com `ConversorJwtAutenticacao`. Detalhes em `docs/adr/ADR-008-remocao-jwt-legado.md`.
 
 ## Observabilidade e operacionalização básica
 A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:

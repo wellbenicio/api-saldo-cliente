@@ -173,8 +173,6 @@ sequenceDiagram
 - A integração real com AWS está fora do escopo deste teste técnico, mas a estrutura foi deixada pronta para evolução segura.
 
 
-> Convenção de linguagem adotada: **português neste desafio**; em projeto real, a preferência é por nomenclatura técnica em **inglês**.
-
 ## Fluxo de atualização de saldo por mensageria (quase em tempo real)
 
 Além da API síncrona e do batch consolidado, existe um fluxo de ingestão assíncrona para atualização quase em tempo real de saldo:

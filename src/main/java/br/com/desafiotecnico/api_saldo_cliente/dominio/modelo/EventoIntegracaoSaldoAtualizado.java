@@ -6,9 +6,6 @@ import java.util.Objects;
 
 /**
  * Evento de integração publicado para outros sistemas após atualização de saldo.
- *
- * <p>Neste desafio os nomes estão em português por escolha simbólica.
- * Em projeto real, a preferência é nomenclatura em inglês para padronização de mercado.</p>
  */
 public record EventoIntegracaoSaldoAtualizado(
         String idEventoIntegracao,

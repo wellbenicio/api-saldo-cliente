@@ -29,4 +29,6 @@ Esse refinamento é tratado como **amadurecimento técnico da solução**, e nã
 ## Escopo de evolução
 A integração real com NFS/AWS permanece fora do escopo deste teste técnico, mantendo apenas contratos e adaptadores preparados para evolução.
 
-> Convenção deste desafio: documentação e código em português; em projeto real, a convenção preferível é inglês técnico.
+## Referências consolidadas
+- Convenção linguística: `docs/adr/ADR-002-nomes-em-portugues.md`.
+- Estratégia de autenticação JWT (remoção de legado): `docs/adr/ADR-008-remocao-jwt-legado.md`.
