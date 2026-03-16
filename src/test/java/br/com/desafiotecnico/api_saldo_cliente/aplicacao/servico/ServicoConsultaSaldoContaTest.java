@@ -6,6 +6,7 @@ import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.AcessoNaoAutoriza
 import br.com.desafiotecnico.api_saldo_cliente.dominio.excecao.ContaNaoEncontradaExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.observabilidade.ObservabilidadeMetricasAplicacao;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -20,7 +21,8 @@ import static org.mockito.Mockito.when;
 class ServicoConsultaSaldoContaTest {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
-    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida);
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
+    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida, observabilidadeMetricasAplicacao);
 
     @Test
     void deveRetornarSaldoQuandoTitularSolicitanteForDonoDaConta() {
