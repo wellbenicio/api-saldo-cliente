@@ -21,3 +21,10 @@ Esse refinamento técnico levou, entre outros pontos, a:
 - separação explícita entre autenticação e autorização por titularidade.
 
 Esse movimento é tratado como amadurecimento técnico da solução, e não como contradição.
+
+
+## Persistência refinada para disponibilidade e evolução
+Após análise mais profunda do requisito de alta disponibilidade, a estratégia de persistência foi refinada:
+- execução local com H2 + JPA para desenvolvimento e validação rápida, sem dependência de infraestrutura externa;
+- desenho conceitual de produção com DynamoDB via adapter dedicado no profile `aws`, priorizando disponibilidade gerenciada e escalabilidade horizontal;
+- manutenção do domínio desacoplado da persistência (entidades JPA isoladas na infraestrutura), aderente à arquitetura hexagonal.

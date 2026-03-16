@@ -3,7 +3,6 @@ package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.saida.r
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.RepositorioSaldoContaPortaSaida;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -11,7 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+@Deprecated
 public class RepositorioSaldoContaMemoriaAdaptador implements RepositorioSaldoContaPortaSaida {
 
     private final Map<String, SaldoConta> saldos = new ConcurrentHashMap<>();

@@ -34,3 +34,9 @@ Em projeto real, a convenção preferível é utilizar nomes em inglês para có
 ## Estratégia de testes
 - **Teste unitário (aplicação/domínio):** valida a regra do caso de uso `ServicoConsultaSaldoConta` de forma isolada, com mock/stub da porta de saída (`RepositorioSaldoContaPortaSaida`) para garantir cenários de titular autorizado, titular não autorizado e conta inexistente.
 - **Teste de integração (HTTP + segurança):** valida a cadeia completa da API no endpoint `/v1/contas/{idConta}/saldo`, incluindo autenticação/autorização e contratos HTTP (status 200/403/401), além do payload de erro retornado pela camada web/security.
+
+## Persistência por profile
+- **local**: usa JPA + H2 em memória para permitir execução rápida, isolamento de testes e sem dependências externas.
+- **aws** (conceitual): usa adaptador esqueleto profissional para DynamoDB, com configuração separada e comentários sobre tabela, região, endpoint e credenciais.
+
+> Neste desafio, o adaptador AWS é propositalmente não integrado para manter foco em arquitetura e separação de responsabilidades.
