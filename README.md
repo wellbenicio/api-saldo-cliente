@@ -67,3 +67,25 @@ Fluxo arquitetural:
 ### Convenção de nomes
 Neste desafio, classes/pacotes estão em português por escolha simbólica.
 Em projeto real de mercado, a convenção preferível continua sendo nomes em inglês.
+
+## Observabilidade e operacionalização básica
+A base de observabilidade foi adicionada para manter execução local simples e preparar evolução para operação real:
+
+- **Spring Actuator** habilitado com `health`, `info` e `metrics`.
+- **Correlation ID** por requisição HTTP (`X-Correlation-Id`) com propagação no MDC.
+- **Logs estruturados** em JSON no console (`logback-spring.xml`).
+- **Métricas de aplicação**:
+  - `saldo_consultas_total`
+  - `saldo_negacoes_acesso_total`
+  - `saldo_falhas_batch_total`
+  - `saldo_falhas_processamento_evento_total`
+
+Consulte documentação detalhada em: `docs/observabilidade.md`.
+
+## Infraestrutura (esqueleto Terraform)
+Foi incluída a pasta `infra/terraform/` com um **esqueleto comentado** para:
+- tópico SNS de alertas;
+- alarmes CloudWatch (ALB 5xx e métrica customizada de falha de evento);
+- variáveis/outputs básicos.
+
+> Como é um desafio técnico, os recursos AWS estão apenas modelados com comentários claros do que seria configurado em ambiente real (IAM, dimensions reais, KMS, endpoints corporativos, estado remoto etc.).
