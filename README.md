@@ -46,11 +46,43 @@ A solução adota arquitetura hexagonal (ports and adapters), com separação em
 
 
 ## Estratégia explícita de profiles
-- `local`: execução padrão da API com adaptadores JPA/H2 e web app ativo.
-- `batch`: habilita o job batch e desativa camada web (`web-application-type: none`).
-- `aws-exemplo`: ativa apenas os componentes de exemplo para persistência AWS (DynamoDB), sem integração real.
+
+| Profile | Finalidade | Componentes ativos/inativos (web, batch, persistência) | Comando de execução | Arquivo de configuração relacionado |
+|---|---|---|---|---|
+| `local` | Execução padrão da API local para consulta de saldo. | **Web:** ativo (padrão Spring Boot)<br>**Batch:** inativo por padrão<br>**Persistência:** ativa via JPA + H2 em memória | `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` | `src/main/resources/application-local.yml` |
+| `batch` | Execução do job de importação em modo não-web. | **Web:** inativo (`web-application-type: none`)<br>**Batch:** ativo (`spring.batch.job.enabled=true`)<br>**Persistência:** depende da combinação com outro profile (ex.: `local`) | `./mvnw spring-boot:run -Dspring-boot.run.profiles=batch,local` | `src/main/resources/application-batch.yml` |
+| `aws-exemplo` | Exemplo conceitual de configuração de persistência AWS (DynamoDB). | **Web:** ativo por padrão (não desativado nesse profile)<br>**Batch:** inativo por padrão<br>**Persistência:** configuração AWS de exemplo (sem integração real) | `./mvnw spring-boot:run -Dspring-boot.run.profiles=aws-exemplo` | `src/main/resources/application-aws-exemplo.yml` |
 
 > Para processar o batch com persistência local, execute com perfis combinados: `batch,local`.
+
+### Propriedades relevantes (busca rápida)
+
+- `saldo.batch.*`
+  - `saldo.batch.diretorio-entrada`
+  - `saldo.batch.nome-arquivo`
+  - `saldo.batch.delimitador`
+- Configurações de segurança JWT
+  - `seguranca.jwt.habilitado`
+  - `seguranca.jwt.issuer`
+  - `seguranca.jwt.jwk-set-uri`
+  - `seguranca.jwt.chave-publica-pem`
+  - `seguranca.jwt.audience`
+  - `seguranca.jwt.tolerancia-clock-skew`
+- Configurações de mensageria simulada
+  - `saldo.integracao.mq.host`
+  - `saldo.integracao.mq.porta`
+  - `saldo.integracao.mq.channel`
+  - `saldo.integracao.mq.queue-manager`
+  - `saldo.integracao.mq.fila-atualizacao`
+  - `saldo.integracao.mq.usuario`
+  - `saldo.integracao.mq.senha`
+  - `saldo.integracao.mq.segredo-referencia`
+
+Referências:
+- `src/main/resources/application-local.yml`
+- `src/main/resources/application-batch.yml`
+- `src/main/resources/application-aws-exemplo.yml`
+- `src/main/resources/application.properties`
 
 ## Comandos de execução
 - **API local (default):**
