@@ -31,13 +31,13 @@ class ServicoProcessamentoEventoSaldoAtualizadoTest {
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida = mock(RepositorioEventoProcessadoPortaSaida.class);
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida = mock(PublicadorEventoIntegracaoSaldoPortaSaida.class);
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
+    private final ObservabilidadePortaSaida observabilidadePortaSaida = mock(ObservabilidadePortaSaida.class);
 
     private final ServicoProcessamentoEventoSaldoAtualizado servico = new ServicoProcessamentoEventoSaldoAtualizado(
             repositorioSaldoContaPortaSaida,
             repositorioEventoProcessadoPortaSaida,
             publicadorEventoIntegracaoSaldoPortaSaida,
-            observabilidadeMetricasAplicacao
+            observabilidadePortaSaida
     );
 
     @Test

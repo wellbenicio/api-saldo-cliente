@@ -15,10 +15,10 @@ public class MonitoramentoFalhaBatchListener implements StepExecutionListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MonitoramentoFalhaBatchListener.class);
 
-    private final ObservabilidadePortaSaida observabilidadePortaSaida;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
-    public MonitoramentoFalhaBatchListener(ObservabilidadePortaSaida observabilidadePortaSaida) {
-        this.observabilidadePortaSaida = observabilidadePortaSaida;
+    public MonitoramentoFalhaBatchListener(ObservabilidadePortaSaida observabilidadeMetricasAplicacao) {
+        this.observabilidadeMetricasAplicacao = observabilidadeMetricasAplicacao;
     }
 
     @Override

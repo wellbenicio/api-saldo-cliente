@@ -25,11 +25,8 @@ import static org.mockito.Mockito.when;
 class ServicoConsultaSaldoContaTest {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
-    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
-    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(
-            repositorioSaldoContaPortaSaida,
-            observabilidadeMetricasAplicacao
-    );
+    private final ObservabilidadePortaSaida observabilidadePortaSaida = mock(ObservabilidadePortaSaida.class);
+    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida, observabilidadePortaSaida);
 
     @Test
     void deveRetornarSaldoQuandoTitularSolicitanteForDonoDaConta() {

@@ -26,13 +26,13 @@ public class ServicoProcessamentoEventoSaldoAtualizado implements ConsumirEvento
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
     private final RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida;
     private final PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida;
-    private final ObservabilidadePortaSaida observabilidadePortaSaida;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
     public ServicoProcessamentoEventoSaldoAtualizado(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
             RepositorioEventoProcessadoPortaSaida repositorioEventoProcessadoPortaSaida,
             PublicadorEventoIntegracaoSaldoPortaSaida publicadorEventoIntegracaoSaldoPortaSaida,
-            ObservabilidadePortaSaida observabilidadePortaSaida
+            ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.repositorioEventoProcessadoPortaSaida = repositorioEventoProcessadoPortaSaida;

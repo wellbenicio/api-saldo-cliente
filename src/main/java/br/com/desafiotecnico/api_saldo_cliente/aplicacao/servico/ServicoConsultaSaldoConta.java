@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 public class ServicoConsultaSaldoConta implements ConsultarSaldoContaPortaEntrada {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida;
-    private final ObservabilidadePortaSaida observabilidadePortaSaida;
+    private final ObservabilidadePortaSaida observabilidadeMetricasAplicacao;
 
     public ServicoConsultaSaldoConta(
             RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida,
-            ObservabilidadePortaSaida observabilidadePortaSaida
+            ObservabilidadePortaSaida observabilidadeMetricasAplicacao
     ) {
         this.repositorioSaldoContaPortaSaida = repositorioSaldoContaPortaSaida;
         this.observabilidadePortaSaida = observabilidadePortaSaida;

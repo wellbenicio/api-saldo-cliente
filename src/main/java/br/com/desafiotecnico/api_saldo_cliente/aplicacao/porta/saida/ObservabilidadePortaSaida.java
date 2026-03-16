@@ -10,3 +10,4 @@ public interface ObservabilidadePortaSaida {
 
     void incrementarFalhasProcessamentoEvento();
 }
+
