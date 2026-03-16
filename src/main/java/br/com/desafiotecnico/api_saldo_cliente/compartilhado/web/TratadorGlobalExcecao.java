@@ -14,6 +14,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -86,6 +87,16 @@ public class TratadorGlobalExcecao {
                 .body(new ErroApiResposta("ACESSO_NAO_AUTORIZADO", excecao.getMessage(), OffsetDateTime.now()));
     }
 
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErroApiResposta> tratarResponseStatus(ResponseStatusException excecao) {
+        HttpStatus status = HttpStatus.resolve(excecao.getStatusCode().value());
+        HttpStatus statusResolvido = status != null ? status : HttpStatus.INTERNAL_SERVER_ERROR;
+
+        return ResponseEntity.status(statusResolvido)
+                .body(new ErroApiResposta(codigoPorStatus(statusResolvido), excecao.getReason(), OffsetDateTime.now()));
+    }
+
     @ExceptionHandler(ExcecaoDominio.class)
     public ResponseEntity<ErroApiResposta> tratarExcecaoDominio(ExcecaoDominio excecao) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
@@ -96,6 +107,16 @@ public class TratadorGlobalExcecao {
     public ResponseEntity<ErroApiResposta> tratarGenerica(Exception excecao) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErroApiResposta("ERRO_INTERNO", excecao.getMessage(), OffsetDateTime.now()));
+    }
+
+
+    private String codigoPorStatus(HttpStatus status) {
+        return switch (status) {
+            case UNAUTHORIZED -> "NAO_AUTENTICADO";
+            case FORBIDDEN -> "ACESSO_NEGADO";
+            case BAD_REQUEST -> "REQUISICAO_INVALIDA";
+            default -> "ERRO_INTERNO";
+        };
     }
 
     private ResponseEntity<ErroApiResposta> respostaRequisicaoInvalida(String mensagem, List<DetalheErroValidacao> detalhes) {

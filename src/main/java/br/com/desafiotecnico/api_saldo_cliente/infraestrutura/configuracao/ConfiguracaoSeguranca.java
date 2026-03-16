@@ -1,14 +1,14 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao;
 
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ConversorJwtAutenticacao;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAcessoNegado;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAutenticacaoNaoAutenticado;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class ConfiguracaoSeguranca {
@@ -16,12 +16,13 @@ public class ConfiguracaoSeguranca {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            FiltroAutenticacaoJwt filtroAutenticacaoJwt,
+            ConversorJwtAutenticacao conversorJwtAutenticacao,
             ManipuladorAutenticacaoNaoAutenticado manipuladorAutenticacaoNaoAutenticado,
             ManipuladorAcessoNegado manipuladorAcessoNegado
     ) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/v1/contas/**").authenticated()
                         .anyRequest().permitAll()
@@ -32,7 +33,9 @@ public class ConfiguracaoSeguranca {
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .addFilterBefore(filtroAutenticacaoJwt, UsernamePasswordAuthenticationFilter.class);
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(conversorJwtAutenticacao))
+                );
 
         return http.build();
     }

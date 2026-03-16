@@ -7,7 +7,7 @@ A solução foi desenhada para representar um serviço de saldo robusto e evolut
 - Java 21 + Spring Boot como base tecnológica.
 - Arquitetura hexagonal (ports and adapters) para desacoplamento.
 - Serviço central de saldo integrado a ecossistema distribuído existente.
-- Estrutura para observabilidade, tratamento global de erros e segurança com separação entre autenticação e autorização por titularidade.
+- Estrutura para observabilidade, tratamento global de erros e segurança com Spring Security OAuth2 Resource Server para autenticação JWT e separação da autorização por titularidade.
 - Decisão explícita de manter autenticação (JWT e montagem de principal) desacoplada da autorização por titularidade no caso de uso, seguindo os limites da arquitetura hexagonal.
 
 ## Refinamento pós-análise

@@ -5,14 +5,17 @@ import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.entrada.comando.C
 import br.com.desafiotecnico.api_saldo_cliente.compartilhado.web.TratadorGlobalExcecao;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.UsuarioAutenticado;
-import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.jwt.FiltroAutenticacaoJwt;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.configuracao.ConfiguracaoSeguranca;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ConversorJwtAutenticacao;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAcessoNegado;
+import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.seguranca.ManipuladorAutenticacaoNaoAutenticado;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,9 +23,9 @@ import org.springframework.test.web.servlet.RequestBuilder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.Set;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -35,9 +38,6 @@ class SaldoContaControladorValidacaoTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private FiltroAutenticacaoJwt filtroAutenticacaoJwt;
 
     @MockitoBean
     private ConsultarSaldoContaPortaEntrada consultarSaldoContaPortaEntrada;
@@ -57,7 +57,7 @@ class SaldoContaControladorValidacaoTest {
 
         assertSaidaSaldoContaDto(
                 get("/v1/contas/12345/saldo")
-                        .principal(autenticacao("titular-001"))
+                        .with(jwt().jwt(jwt -> jwt.claim("sub", "titular-001")))
                         .accept(APPLICATION_JSON),
                 "12345",
                 "titular-001",
@@ -68,42 +68,24 @@ class SaldoContaControladorValidacaoTest {
     }
 
     @Test
-    void deveRetornarSaldoComCamposObrigatoriosQuandoEntradaValida() throws Exception {
-        OffsetDateTime atualizadoEm = OffsetDateTime.parse("2026-12-31T23:59:59Z");
-        SaldoConta saldoConta = new SaldoConta(
-                new Conta("998877", "titular-777"),
-                new BigDecimal("450.25"),
-                "USD",
-                atualizadoEm
-        );
-
+    void deveRetornar403QuandoSolicitanteNaoForTitular() throws Exception {
         when(consultarSaldoContaPortaEntrada.consultar(ArgumentMatchers.any(ConsultarSaldoContaComando.class)))
-                .thenReturn(saldoConta);
+                .thenThrow(new AcessoNaoAutorizadoContaExcecao("12345", "titular-999"));
 
-        assertSaidaSaldoContaDto(
-                get("/v1/contas/998877/saldo")
-                        .principal(autenticacao("titular-777"))
-                        .accept(APPLICATION_JSON),
-                "998877",
-                "titular-777",
-                450.25,
-                "USD",
-                "2026-12-31T23:59:59Z"
-        );
-    }
-
-    @Test
-    void deveRetornarErroPadronizadoQuandoIdContaInvalida() throws Exception {
-        mockMvc.perform(get("/v1/contas/%20/saldo")
-                        .principal(autenticacao("titular-123"))
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .with(jwt().jwt(jwt -> jwt.claim("sub", "titular-999")))
                         .accept(APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("REQUISICAO_INVALIDA"));
     }
 
-    private UsernamePasswordAuthenticationToken autenticacao(String idTitular) {
-        UsuarioAutenticado usuarioAutenticado = new UsuarioAutenticado(idTitular, "12345678900", Set.of("conta:saldo:consultar"));
-        return new UsernamePasswordAuthenticationToken(usuarioAutenticado, null, Set.of());
+    @Test
+    void deveRetornar401QuandoTokenNaoContiverIdentificadorTitular() throws Exception {
+        mockMvc.perform(get("/v1/contas/12345/saldo")
+                        .with(jwt().jwt(jwt -> jwt.claim("sub", " ").claim("scope", "saldo:read")))
+                        .accept(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"));
     }
 
     private void assertSaidaSaldoContaDto(

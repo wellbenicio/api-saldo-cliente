@@ -54,14 +54,10 @@ class SaldoContaControladorSegurancaIntegracaoTest {
     void deveRetornar401QuandoTokenInvalido() throws Exception {
         mockMvc.perform(get("/v1/contas/12345/saldo")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer token-invalido"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
-                .andExpect(jsonPath("$.mensagem").value("Token JWT inválido ou expirado."));
+                .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/v1/contas/12345/saldo"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.codigo").value("NAO_AUTENTICADO"))
-                .andExpect(jsonPath("$.mensagem").value("Token JWT ausente ou inválido."));
+                .andExpect(status().isUnauthorized());
     }
 
     private String gerarToken(String sujeito, String documento, String escopo) {

@@ -19,6 +19,13 @@ public class PropriedadesSegurancaJwt {
     private boolean habilitado;
 
     /**
+     * Segredo compartilhado para cenários com assinatura simétrica (HS256).
+     *
+     * Para ambientes reais, externalize via variável de ambiente/secret manager.
+     */
+    private String segredoAssinatura;
+
+    /**
      * Issuer esperado para os tokens recebidos.
      *
      * Em produção, configure o issuer real via application.properties,
@@ -59,6 +66,14 @@ public class PropriedadesSegurancaJwt {
 
     public void setHabilitado(boolean habilitado) {
         this.habilitado = habilitado;
+    }
+
+    public String getSegredoAssinatura() {
+        return segredoAssinatura;
+    }
+
+    public void setSegredoAssinatura(String segredoAssinatura) {
+        this.segredoAssinatura = segredoAssinatura;
     }
 
     public String getIssuer() {
