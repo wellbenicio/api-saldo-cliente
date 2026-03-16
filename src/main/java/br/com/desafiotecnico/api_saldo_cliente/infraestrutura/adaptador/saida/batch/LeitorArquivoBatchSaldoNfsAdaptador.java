@@ -1,6 +1,7 @@
 package br.com.desafiotecnico.api_saldo_cliente.infraestrutura.adaptador.saida.batch;
 
 import br.com.desafiotecnico.api_saldo_cliente.aplicacao.porta.saida.LeitorArquivoBatchSaldoPortaSaida;
+import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.Conta;
 import br.com.desafiotecnico.api_saldo_cliente.dominio.modelo.SaldoConta;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.LeitorRegistroArquivoSaldoBatchItemReader;
 import br.com.desafiotecnico.api_saldo_cliente.infraestrutura.batch.ProcessadorRegistroArquivoSaldoBatchItemProcessor;

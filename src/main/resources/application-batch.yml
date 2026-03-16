@@ -1,0 +1,9 @@
+spring:
+  batch:
+    job:
+      enabled: true
+  main:
+    web-application-type: none
+
+# Exemplo de execução:
+# ./mvnw spring-boot:run -Dspring-boot.run.profiles=batch -Dspring-boot.run.arguments="--saldo.batch.arquivo-entrada=/tmp/saldos.csv"

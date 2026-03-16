@@ -14,3 +14,9 @@ spring:
   sql:
     init:
       mode: always
+
+
+saldo:
+  batch:
+    diretorio-entrada: ./data
+    nome-arquivo: saldo-consolidado.csv
