@@ -16,6 +16,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,8 +25,11 @@ import static org.mockito.Mockito.when;
 class ServicoConsultaSaldoContaTest {
 
     private final RepositorioSaldoContaPortaSaida repositorioSaldoContaPortaSaida = mock(RepositorioSaldoContaPortaSaida.class);
-    private final ObservabilidadePortaSaida observabilidadePortaSaida = mock(ObservabilidadePortaSaida.class);
-    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(repositorioSaldoContaPortaSaida, observabilidadePortaSaida);
+    private final ObservabilidadeMetricasAplicacao observabilidadeMetricasAplicacao = mock(ObservabilidadeMetricasAplicacao.class);
+    private final ServicoConsultaSaldoConta servicoConsultaSaldoConta = new ServicoConsultaSaldoConta(
+            repositorioSaldoContaPortaSaida,
+            observabilidadeMetricasAplicacao
+    );
 
     @Test
     void deveRetornarSaldoQuandoTitularSolicitanteForDonoDaConta() {
@@ -43,7 +48,8 @@ class ServicoConsultaSaldoContaTest {
         SaldoConta saldoConta = servicoConsultaSaldoConta.consultar(comando);
 
         assertEquals(saldoContaEsperado, saldoConta);
-        verify(observabilidadePortaSaida).incrementarConsultasSaldo();
+        verify(observabilidadeMetricasAplicacao).incrementarConsultasSaldo();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarNegacoesAcesso();
     }
 
     @Test
@@ -61,7 +67,8 @@ class ServicoConsultaSaldoContaTest {
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("12345")).thenReturn(Optional.of(saldoConta));
 
         assertThrows(AcessoNaoAutorizadoContaExcecao.class, () -> servicoConsultaSaldoConta.consultar(comando));
-        verify(observabilidadePortaSaida).incrementarNegacoesAcesso();
+        verify(observabilidadeMetricasAplicacao).incrementarNegacoesAcesso();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarConsultasSaldo();
     }
 
     @Test
@@ -71,5 +78,7 @@ class ServicoConsultaSaldoContaTest {
         when(repositorioSaldoContaPortaSaida.buscarPorIdConta("conta-inexistente")).thenReturn(Optional.empty());
 
         assertThrows(ContaNaoEncontradaExcecao.class, () -> servicoConsultaSaldoConta.consultar(comando));
+        verify(observabilidadeMetricasAplicacao, never()).incrementarConsultasSaldo();
+        verify(observabilidadeMetricasAplicacao, never()).incrementarNegacoesAcesso();
     }
 }
